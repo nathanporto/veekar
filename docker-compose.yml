@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veekar_backend
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: veekar
+      DB_USERNAME: veekar
+      DB_PASSWORD: veekar_secret
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - veekar_net
+
+  db:
+    image: postgres:16-alpine
+    container_name: veekar_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: veekar
+      POSTGRES_USER: veekar
+      POSTGRES_PASSWORD: veekar_secret
+    volumes:
+      - veekar_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veekar -d veekar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veekar_net
+
+volumes:
+  veekar_db_data:
+
+networks:
+  veekar_net:
+    driver: bridge
