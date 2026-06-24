@@ -72,39 +72,65 @@ function formatCurrency(value: string | null) {
         <p>Nenhum atendimento registrado ainda.</p>
       </div>
 
-      <table v-else class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Placa</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Veículo</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Cliente</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Serviço</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Data</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Valor</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr
+      <div v-else>
+        <!-- Tabela desktop -->
+        <table class="w-full hidden md:table">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Placa</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Veículo</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Cliente</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Serviço</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Data</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Valor</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr
+              v-for="s in recentServices"
+              :key="s.id"
+              class="hover:bg-gray-50 cursor-pointer transition-colors"
+              @click="$router.push(`/veiculos/${s.vehicle_id}`)"
+            >
+              <td class="px-6 py-4">
+                <span class="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                  {{ s.vehicle?.plate }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ s.vehicle?.brand }} {{ s.vehicle?.model }}</td>
+              <td class="px-6 py-4 text-sm text-gray-600">{{ s.vehicle?.customer?.name }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{{ s.description }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(s.service_date) }}</td>
+              <td class="px-6 py-4 text-sm text-gray-900">{{ formatCurrency(s.amount) }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Cards mobile -->
+        <div class="divide-y divide-gray-100 md:hidden">
+          <div
             v-for="s in recentServices"
             :key="s.id"
-            class="hover:bg-gray-50 cursor-pointer transition-colors"
+            class="px-4 py-4 flex items-start justify-between gap-3 cursor-pointer active:bg-gray-50"
             @click="$router.push(`/veiculos/${s.vehicle_id}`)"
           >
-            <td class="px-6 py-4">
-              <span class="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                {{ s.vehicle?.plate }}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-900">
-              {{ s.vehicle?.brand }} {{ s.vehicle?.model }}
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-600">{{ s.vehicle?.customer?.name }}</td>
-            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{{ s.description }}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(s.service_date) }}</td>
-            <td class="px-6 py-4 text-sm text-gray-900">{{ formatCurrency(s.amount) }}</td>
-          </tr>
-        </tbody>
-      </table>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                  {{ s.vehicle?.plate }}
+                </span>
+                <span class="text-xs text-gray-500">{{ s.vehicle?.brand }} {{ s.vehicle?.model }}</span>
+              </div>
+              <p class="text-sm text-gray-900 truncate">{{ s.description }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ s.vehicle?.customer?.name }}</p>
+            </div>
+            <div class="flex-shrink-0 text-right">
+              <p class="text-sm font-semibold text-gray-900">{{ formatCurrency(s.amount) }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(s.service_date) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

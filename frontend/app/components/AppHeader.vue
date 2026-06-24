@@ -3,6 +3,7 @@ import { useVehiclesStore } from '~/stores/vehicles'
 
 const vehiclesStore = useVehiclesStore()
 const router = useRouter()
+const { toggle } = useMobileMenu()
 
 const search = ref('')
 const searching = ref(false)
@@ -29,7 +30,16 @@ async function searchByPlate() {
 </script>
 
 <template>
-  <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4">
+  <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+    <button
+      class="md:hidden flex-shrink-0 p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+      @click="toggle()"
+    >
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
     <form class="flex-1 max-w-md flex gap-2" @submit.prevent="searchByPlate">
       <div class="relative flex-1">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

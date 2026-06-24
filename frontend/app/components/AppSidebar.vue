@@ -5,6 +5,9 @@ import { useSubscriptionStore } from '~/stores/subscription'
 const auth = useAuthStore()
 const subscriptionStore = useSubscriptionStore()
 const route = useRoute()
+const { isOpen, close } = useMobileMenu()
+
+watch(() => route.path, close)
 
 const navItems = [
   { label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', to: '/dashboard' },
@@ -19,8 +22,20 @@ function isActive(to: string) {
 </script>
 
 <template>
-  <aside class="w-64 bg-slate-900 flex flex-col flex-shrink-0">
-    <div class="p-6 border-b border-slate-700">
+  <Teleport to="body">
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 bg-black/50 z-40 md:hidden"
+      @click="close()"
+    />
+  </Teleport>
+
+  <aside
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 flex flex-col transition-transform duration-300
+           md:relative md:z-auto md:translate-x-0 md:flex-shrink-0"
+    :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <div class="p-6 border-b border-slate-700 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -30,6 +45,14 @@ function isActive(to: string) {
         </div>
         <span class="text-white font-bold text-xl tracking-tight">Veekar</span>
       </div>
+      <button
+        class="md:hidden text-slate-400 hover:text-white p-1"
+        @click="close()"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
     <nav class="flex-1 p-4 space-y-1">

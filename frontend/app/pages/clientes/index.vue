@@ -89,43 +89,63 @@ function useDebounceFn(fn: () => void, delay: number) {
         </NuxtLink>
       </div>
 
-      <table v-else class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Nome</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">CPF</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Telefone</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">E-mail</th>
-            <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Ações</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr v-for="customer in store.customers" :key="customer.id" class="hover:bg-gray-50 transition-colors">
-            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ customer.name }}</td>
-            <td class="px-6 py-4 text-sm text-gray-500 font-mono">{{ customer.cpf ?? '—' }}</td>
-            <td class="px-6 py-4 text-sm text-gray-600">{{ customer.phone }}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">{{ customer.email ?? '—' }}</td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <NuxtLink
-                  :to="`/clientes/${customer.id}/editar`"
-                  class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  Editar
-                </NuxtLink>
-                <span class="text-gray-300">|</span>
-                <button
-                  class="text-red-500 hover:text-red-700 text-sm font-medium disabled:opacity-40"
-                  :disabled="deleting && deleteTarget === customer.id"
-                  @click="askDelete(customer.id)"
-                >
-                  Excluir
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else>
+        <!-- Tabela desktop -->
+        <table class="w-full hidden md:table">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Nome</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">CPF</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Telefone</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">E-mail</th>
+              <th class="text-left text-xs font-medium text-gray-500 px-6 py-3 uppercase tracking-wider">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr v-for="customer in store.customers" :key="customer.id" class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ customer.name }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500 font-mono">{{ customer.cpf ?? '—' }}</td>
+              <td class="px-6 py-4 text-sm text-gray-600">{{ customer.phone }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ customer.email ?? '—' }}</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <NuxtLink :to="`/clientes/${customer.id}/editar`" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Editar</NuxtLink>
+                  <span class="text-gray-300">|</span>
+                  <button
+                    class="text-red-500 hover:text-red-700 text-sm font-medium disabled:opacity-40"
+                    :disabled="deleting && deleteTarget === customer.id"
+                    @click="askDelete(customer.id)"
+                  >Excluir</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Cards mobile -->
+        <div class="divide-y divide-gray-100 md:hidden">
+          <div
+            v-for="customer in store.customers"
+            :key="customer.id"
+            class="px-4 py-4 flex items-start justify-between gap-3"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-gray-900 truncate">{{ customer.name }}</p>
+              <p class="text-sm text-gray-500 mt-0.5">{{ customer.phone }}</p>
+              <p v-if="customer.cpf" class="text-xs text-gray-400 font-mono mt-0.5">{{ customer.cpf }}</p>
+              <p v-if="customer.email" class="text-xs text-gray-400 truncate mt-0.5">{{ customer.email }}</p>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0 pt-0.5">
+              <NuxtLink :to="`/clientes/${customer.id}/editar`" class="text-blue-600 text-sm font-medium">Editar</NuxtLink>
+              <button
+                class="text-red-500 text-sm font-medium disabled:opacity-40"
+                :disabled="deleting && deleteTarget === customer.id"
+                @click="askDelete(customer.id)"
+              >Excluir</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
