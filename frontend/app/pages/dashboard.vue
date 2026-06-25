@@ -97,22 +97,22 @@ function formatCurrency(value: string | null) {
     <!-- Widget orçamentos -->
     <NuxtLink
       to="/orcamentos"
-      class="block bg-gradient-to-r from-violet-600 to-violet-700 rounded-xl p-5 shadow-sm hover:from-violet-700 hover:to-violet-800 transition-all"
+      class="block bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-5 shadow-sm hover:from-slate-800 hover:to-slate-900 transition-all"
     >
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-violet-200 text-xs font-medium uppercase tracking-wide mb-1">Orçamentos pendentes</p>
+          <p class="text-slate-300 text-xs font-medium uppercase tracking-wide mb-1">Orçamentos pendentes</p>
           <p class="text-2xl font-bold text-white">
             {{ quotesStore.loading ? '—' : quotesStore.pendingCount }}
           </p>
-          <p class="text-violet-200 text-xs mt-1">aguardando resposta do cliente</p>
+          <p class="text-slate-300 text-xs mt-1">aguardando resposta do cliente</p>
         </div>
         <div class="flex flex-col items-end gap-1">
-          <svg class="w-8 h-8 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <span class="text-violet-300 text-xs">Ver orçamentos →</span>
+          <span class="text-slate-400 text-xs">Ver orçamentos →</span>
         </div>
       </div>
     </NuxtLink>
