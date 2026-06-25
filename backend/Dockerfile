@@ -12,14 +12,16 @@ RUN apk add --no-cache \
     curl \
     git
 
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
     pdo \
     pdo_pgsql \
     mbstring \
     exif \
     pcntl \
     bcmath \
-    xml
+    xml \
+    gd
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 

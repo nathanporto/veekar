@@ -14,6 +14,10 @@ class VehicleController extends Controller
         $userId = auth()->id();
         $query = Vehicle::with('customer')->where('user_id', $userId);
 
+        if ($customerId = $request->query('customer_id')) {
+            $query->where('customer_id', (int) $customerId);
+        }
+
         if ($search = $request->query('search')) {
             $term = strtoupper($search);
             $query->where(function ($q) use ($search, $term) {
