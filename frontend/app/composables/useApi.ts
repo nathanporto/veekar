@@ -25,7 +25,24 @@ export function useApi() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Erro inesperado' }))
-      throw new Error(error.message ?? `HTTP ${response.status}`)
+      // Se vier erros de validação por campo, usa a primeira mensagem de campo
+      if (error.errors) {
+        const firstField = Object.keys(error.errors)[0]
+        const firstMsg = error.errors[firstField]?.[0]
+        if (firstMsg && !firstMsg.startsWith('validation.')) {
+          throw new Error(firstMsg)
+        }
+        // Fallback para mensagem amigável por campo
+        const fieldLabels: Record<string, string> = {
+          email: 'E-mail',
+          document: 'CPF/CNPJ',
+          name: 'Nome',
+          password: 'Senha',
+        }
+        const label = fieldLabels[firstField] ?? firstField
+        if (firstMsg?.startsWith('validation.unique')) throw new Error(`${label} já está em uso.`)
+      }
+      throw new Error(error.message && !error.message.startsWith('validation.') ? error.message : 'Erro de validação. Verifique os dados.')
     }
 
     if (response.status === 204) return undefined as T

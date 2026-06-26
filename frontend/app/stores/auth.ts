@@ -9,14 +9,14 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
 
   async function login(email: string, password: string) {
-    const data = await api.post<{ token: string; user: User }>('/auth/login', { email, password })
+    const data = await api.post<{ token: string; user: User; code?: string }>('/auth/login', { email, password })
     token.value = data.token
     user.value = data.user
     await navigateTo('/dashboard')
   }
 
   async function register(name: string, companyName: string, document: string, email: string, password: string, passwordConfirmation: string) {
-    const data = await api.post<{ token: string; user: User }>('/auth/register', {
+    await api.post('/auth/register', {
       name,
       company_name: companyName,
       document,
@@ -24,9 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
       password,
       password_confirmation: passwordConfirmation,
     })
-    token.value = data.token
-    user.value = data.user
-    await navigateTo('/dashboard')
+    await navigateTo('/verificar-email/pendente')
   }
 
   async function logout() {

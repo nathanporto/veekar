@@ -2,19 +2,17 @@
 
 namespace App\Services;
 
-use Resend;
+use Illuminate\Support\Facades\Mail;
 
 class EmailService
 {
-    private \Resend\Client $client;
     private string $from;
+    private string $fromName;
 
     public function __construct()
     {
-        $this->client = Resend::client(config('services.resend.key'));
-        $fromName     = config('services.resend.from_name', 'Veekar');
-        $fromEmail    = config('services.resend.from', 'onboarding@resend.dev');
-        $this->from   = "{$fromName} <{$fromEmail}>";
+        $this->from     = config('mail.from.address', 'veekarofc@gmail.com');
+        $this->fromName = config('mail.from.name', 'Veekar');
     }
 
     public function sendWelcome(string $email, string $name): void
@@ -84,14 +82,28 @@ class EmailService
         );
     }
 
+    public function sendEmailVerification(string $email, string $name, string $token): void
+    {
+        $verifyUrl = config('services.stripe.frontend_url') . '/verificar-email?token=' . $token . '&email=' . urlencode($email);
+
+        $this->send(
+            to: $email,
+            subject: 'Confirme seu e-mail — Veekar',
+            html: $this->template('Confirme seu e-mail', [
+                'Olá, ' . $this->firstName($name) . '! Sua conta foi criada com sucesso.',
+                'Clique no botão abaixo para confirmar seu e-mail e ativar sua conta.',
+                'O link expira em <strong>24 horas</strong>. Se você não criou uma conta no Veekar, ignore este e-mail.',
+            ], 'Confirmar e-mail', $verifyUrl)
+        );
+    }
+
     private function send(string $to, string $subject, string $html): void
     {
-        $this->client->emails->send([
-            'from'    => $this->from,
-            'to'      => $to,
-            'subject' => $subject,
-            'html'    => $html,
-        ]);
+        Mail::html($html, function ($message) use ($to, $subject) {
+            $message->to($to)
+                    ->subject($subject)
+                    ->from($this->from, $this->fromName);
+        });
     }
 
     private function firstName(string $name): string
