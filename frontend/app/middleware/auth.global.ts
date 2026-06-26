@@ -3,7 +3,9 @@ const publicRoutes = ['/', '/login', '/register', '/esqueci-senha', '/redefinir-
 export default defineNuxtRouteMiddleware((to) => {
   const token = useCookie('veekar_token')
 
-  if (!token.value && !publicRoutes.includes(to.path)) {
+  const isPublic = publicRoutes.includes(to.path) || to.path.startsWith('/orcamento/')
+
+  if (!token.value && !isPublic) {
     return navigateTo('/login')
   }
 
