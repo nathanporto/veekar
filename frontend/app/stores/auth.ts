@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(name: string, companyName: string, document: string, email: string, password: string, passwordConfirmation: string) {
-    await api.post('/auth/register', {
+    const data = await api.post<{ token: string; user: User }>('/auth/register', {
       name,
       company_name: companyName,
       document,
@@ -24,7 +24,9 @@ export const useAuthStore = defineStore('auth', () => {
       password,
       password_confirmation: passwordConfirmation,
     })
-    await navigateTo('/verificar-email/pendente')
+    token.value = data.token
+    user.value = data.user
+    await navigateTo('/dashboard')
   }
 
   async function logout() {
