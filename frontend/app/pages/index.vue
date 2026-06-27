@@ -36,6 +36,57 @@ const features = [
   },
 ]
 
+const newFeatures = [
+  {
+    emoji: '📋',
+    tag: 'Organização',
+    title: 'Etapas do Serviço',
+    description: 'Acompanhe cada carro em tempo real: Recebido → Diagnóstico → Aguardando Peças → Em Serviço → Pronto. Arraste os cards igual ao Trello ou mova com um clique.',
+    color: 'from-indigo-500 to-blue-600',
+    light: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+  },
+  {
+    emoji: '📲',
+    tag: 'Transparência',
+    title: 'Link de acompanhamento para o cliente',
+    description: 'Gere um link único por atendimento e mande pelo WhatsApp. O cliente abre no celular e vê a etapa atual, a previsão de entrega e os serviços — sem precisar ligar para a oficina.',
+    color: 'from-green-500 to-emerald-600',
+    light: 'bg-green-50 text-green-700 border-green-100',
+  },
+  {
+    emoji: '📅',
+    tag: 'Agenda',
+    title: 'Agenda de entregas e retornos',
+    description: 'Uma aba dedicada para ver todos os carros com entrega prevista e retornos agendados. Filtre por hoje, esta semana ou todos. Alertas automáticos de atraso.',
+    color: 'from-orange-500 to-amber-600',
+    light: 'bg-orange-50 text-orange-700 border-orange-100',
+  },
+  {
+    emoji: '🛡️',
+    tag: 'Seguro',
+    title: 'Registro de seguro',
+    description: 'Registre a seguradora, número do sinistro e acompanhe o status da aprovação: Aguardando → Aprovado → Recusado. Incluso no checklist PDF.',
+    color: 'from-yellow-500 to-orange-500',
+    light: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+  },
+  {
+    emoji: '✅',
+    tag: 'Entrada',
+    title: 'Checklist de entrada com PDF',
+    description: 'Registre o estado do veículo ao receber: riscos, amassados, nível de combustível e observações. Gere um PDF assinável para proteger sua oficina.',
+    color: 'from-blue-500 to-cyan-600',
+    light: 'bg-blue-50 text-blue-700 border-blue-100',
+  },
+  {
+    emoji: '🔔',
+    tag: 'Retenção',
+    title: 'Agendamento de retorno',
+    description: 'Ao finalizar um serviço, agende quando o cliente deve voltar — troca de óleo, revisão, alinhamento. Aparecem automaticamente na Agenda com contagem regressiva.',
+    color: 'from-purple-500 to-violet-600',
+    light: 'bg-purple-50 text-purple-700 border-purple-100',
+  },
+]
+
 const steps = [
   { number: '01', title: 'Cadastre sua oficina', description: 'Crie sua conta gratuitamente em menos de 1 minuto. Nenhum cartão necessário para começar.' },
   { number: '02', title: 'Adicione seus clientes e veículos', description: 'Importe ou cadastre seus clientes e os veículos de cada um. Tudo organizado e de fácil acesso.' },
@@ -238,6 +289,54 @@ function toggleFaq(index: number) {
       </div>
     </section>
 
+    <!-- NOVIDADES -->
+    <section class="py-24 bg-slate-950 text-white overflow-hidden">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="text-center mb-14">
+          <div class="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold px-3.5 py-1.5 rounded-full mb-5 uppercase tracking-widest">
+            <span class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+            Novidades
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-bold">Funcionalidades que a concorrência<br class="hidden sm:block"> ainda não tem</h2>
+          <p class="mt-4 text-slate-400 max-w-xl mx-auto">Recursos pensados para o dia a dia real da oficina — do recebimento do carro até a entrega ao cliente.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div
+            v-for="f in newFeatures"
+            :key="f.title"
+            class="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-slate-600 transition-all group overflow-hidden"
+          >
+            <!-- Glow bg -->
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl bg-gradient-to-br" :class="f.color" />
+
+            <div class="relative">
+              <div class="flex items-start justify-between mb-4">
+                <span class="text-3xl">{{ f.emoji }}</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border" :class="f.light">
+                  {{ f.tag }}
+                </span>
+              </div>
+              <h3 class="font-bold text-white text-lg mb-2">{{ f.title }}</h3>
+              <p class="text-sm text-slate-400 leading-relaxed">{{ f.description }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 text-center">
+          <NuxtLink
+            to="/register"
+            class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-4 rounded-xl text-base transition-all shadow-lg shadow-blue-600/30"
+          >
+            Testar grátis agora
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
     <!-- HOW IT WORKS -->
     <section id="como-funciona" class="py-24 bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6">
@@ -318,48 +417,25 @@ function toggleFaq(index: number) {
                 <span class="text-blue-200 pb-1 text-lg">,90<span class="text-sm">/mês</span></span>
               </div>
               <p class="text-blue-200 text-sm mb-6">Acesso ilimitado a tudo</p>
-              <ul class="space-y-3 text-sm text-white mb-8">
-                <li class="flex items-center gap-2.5">
+              <ul class="space-y-2.5 text-sm text-white mb-8">
+                <li v-for="item in [
+                  'Clientes e veículos ilimitados',
+                  'Histórico completo de serviços',
+                  'Controle de peças e valores',
+                  'Dashboard e relatórios financeiros',
+                  'Orçamentos digitais com link',
+                  'Etapas do serviço (kanban)',
+                  'Link de acompanhamento para o cliente',
+                  'Agenda de entregas e retornos',
+                  'Checklist de entrada com PDF',
+                  'Registro de seguro',
+                  'Agendamento de retorno',
+                  'Cancele quando quiser',
+                ]" :key="item" class="flex items-center gap-2.5">
                   <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                   </svg>
-                  Clientes e veículos ilimitados
-                </li>
-                <li class="flex items-center gap-2.5">
-                  <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Histórico completo de serviços
-                </li>
-                <li class="flex items-center gap-2.5">
-                  <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Controle de peças e valores
-                </li>
-                <li class="flex items-center gap-2.5">
-                  <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Dashboard e relatórios
-                </li>
-                <li class="flex items-center gap-2.5">
-                  <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Suporte prioritário
-                </li>
-                <li class="flex items-center gap-2.5">
-                  <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Orçamentos digitais com link
-                </li>
-                <li class="flex items-center gap-2.5">
-                  <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Cancele quando quiser
+                  {{ item }}
                 </li>
               </ul>
               <NuxtLink to="/register" class="block text-center py-3 bg-white hover:bg-blue-50 text-blue-600 font-semibold rounded-xl transition-colors text-sm shadow-lg">

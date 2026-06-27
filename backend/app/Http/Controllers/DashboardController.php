@@ -20,6 +20,47 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function kanban(): JsonResponse
+    {
+        $userId = auth()->id();
+
+        $services = ServiceHistory::with(['vehicle.customer'])
+            ->whereHas('vehicle', fn ($q) => $q->where('user_id', $userId))
+            ->where('service_status', '!=', 'entregue')
+            ->orderByDesc('service_date')
+            ->get();
+
+        return response()->json($services);
+    }
+
+    public function agenda(): JsonResponse
+    {
+        $userId = auth()->id();
+
+        $deliveries = ServiceHistory::with(['vehicle.customer'])
+            ->whereHas('vehicle', fn ($q) => $q->where('user_id', $userId))
+            ->whereNotNull('estimated_delivery')
+            ->where('estimated_delivery', '>=', now()->subDays(1)->toDateString())
+            ->orderBy('estimated_delivery')
+            ->limit(50)
+            ->get()
+            ->map(fn ($h) => array_merge($h->toArray(), ['_type' => 'delivery']));
+
+        $returns = ServiceHistory::with(['vehicle.customer'])
+            ->whereHas('vehicle', fn ($q) => $q->where('user_id', $userId))
+            ->whereNotNull('return_date')
+            ->where('return_date', '>=', now()->subDays(1)->toDateString())
+            ->orderBy('return_date')
+            ->limit(50)
+            ->get()
+            ->map(fn ($h) => array_merge($h->toArray(), ['_type' => 'return']));
+
+        return response()->json([
+            'deliveries' => $deliveries,
+            'returns'    => $returns,
+        ]);
+    }
+
     public function upcomingReturns(): JsonResponse
     {
         $userId = auth()->id();

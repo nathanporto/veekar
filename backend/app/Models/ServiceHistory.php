@@ -18,13 +18,20 @@ class ServiceHistory extends Model
         'return_date',
         'return_reason',
         'entry_checklist',
+        'insurer',
+        'claim_number',
+        'insurance_status',
+        'estimated_delivery',
+        'tracking_token',
+        'service_status',
     ];
 
     protected function casts(): array
     {
         return [
             'service_date'    => 'date',
-            'return_date'     => 'date',
+            'return_date'         => 'date',
+            'estimated_delivery'  => 'date',
             'amount'          => 'decimal:2',
             'entry_checklist' => 'array',
         ];

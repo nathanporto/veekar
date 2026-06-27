@@ -20,10 +20,17 @@ export const useServiceHistoryStore = defineStore('serviceHistory', () => {
     return api.post<ServiceHistory>(`/vehicles/${vehicleId}/service-histories`, payload)
   }
 
+  async function update(vehicleId: number, historyId: number, payload: Partial<ServiceHistory>): Promise<ServiceHistory> {
+    const data = await api.put<ServiceHistory>(`/vehicles/${vehicleId}/service-histories/${historyId}`, payload)
+    const idx = histories.value.findIndex(h => h.id === historyId)
+    if (idx !== -1) histories.value[idx] = data
+    return data
+  }
+
   async function remove(vehicleId: number, historyId: number): Promise<void> {
     await api.delete(`/vehicles/${vehicleId}/service-histories/${historyId}`)
     histories.value = histories.value.filter(h => h.id !== historyId)
   }
 
-  return { histories, loading, fetchByVehicle, create, remove }
+  return { histories, loading, fetchByVehicle, create, update, remove }
 })

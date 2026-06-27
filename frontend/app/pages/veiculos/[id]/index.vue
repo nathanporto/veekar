@@ -247,6 +247,50 @@ function formatCurrency(value: string | null) {
                   <span v-if="h.return_reason" class="text-opacity-80">· {{ h.return_reason }}</span>
                 </div>
 
+                <!-- Badge seguro -->
+                <span
+                  v-if="h.insurance_status"
+                  class="mt-2 ml-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                  :class="{
+                    'bg-yellow-50 text-yellow-700': h.insurance_status === 'aguardando',
+                    'bg-green-50 text-green-700': h.insurance_status === 'aprovado',
+                    'bg-red-50 text-red-600': h.insurance_status === 'recusado',
+                  }"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Seguro {{ h.insurer ? `· ${h.insurer}` : '' }}
+                  <span class="capitalize">· {{ h.insurance_status }}</span>
+                </span>
+
+                <!-- Etapa do serviço -->
+                <span
+                  v-if="(h as any).service_status && (h as any).service_status !== 'entregue'"
+                  class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                  :class="{
+                    'bg-gray-100 text-gray-600':   (h as any).service_status === 'recebido',
+                    'bg-blue-50 text-blue-700':    (h as any).service_status === 'em_diagnostico',
+                    'bg-amber-50 text-amber-700':  (h as any).service_status === 'aguardando_pecas',
+                    'bg-indigo-50 text-indigo-700':(h as any).service_status === 'em_servico',
+                    'bg-green-50 text-green-700':  (h as any).service_status === 'pronto',
+                  }"
+                >
+                  {{
+                    { recebido: 'Recebido', em_diagnostico: 'Em diagnóstico', aguardando_pecas: 'Aguardando peças',
+                      em_servico: 'Em serviço', pronto: 'Pronto' }[(h as any).service_status] ?? (h as any).service_status
+                  }}
+                </span>
+
+                <!-- Previsão de entrega -->
+                <div v-if="(h as any).estimated_delivery" class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                  :class="new Date((h as any).estimated_delivery + 'T00:00:00') < new Date() ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  Entrega {{ formatDate((h as any).estimated_delivery) }} ({{ daysUntil((h as any).estimated_delivery) }})
+                </div>
+
                 <!-- Botão checklist PDF -->
                 <button
                   v-if="h.entry_checklist"
@@ -284,17 +328,30 @@ function formatCurrency(value: string | null) {
                   </table>
                 </div>
               </div>
-              <button
-                class="text-red-400 hover:text-red-600 flex-shrink-0 disabled:opacity-40"
-                :disabled="deleting === h.id"
-                title="Excluir atendimento"
-                @click="askDeleteHistory(h.id)"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <SharePopup v-if="(h as any).tracking_token" :token="(h as any).tracking_token" />
+                <NuxtLink
+                  :to="`/veiculos/${id}/atendimento/${h.id}/editar`"
+                  title="Editar atendimento"
+                  class="text-gray-400 hover:text-blue-600"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </NuxtLink>
+                <button
+                  class="text-red-400 hover:text-red-600 disabled:opacity-40"
+                  :disabled="deleting === h.id"
+                  title="Excluir atendimento"
+                  @click="askDeleteHistory(h.id)"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>

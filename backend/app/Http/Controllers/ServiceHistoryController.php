@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Mpdf\Mpdf;
 
 class ServiceHistoryController extends Controller
@@ -38,6 +39,10 @@ class ServiceHistoryController extends Controller
             'entry_checklist.dents'             => ['nullable', 'boolean'],
             'entry_checklist.fuel_level'        => ['nullable', 'string', 'in:vazio,1/4,1/2,3/4,cheio'],
             'entry_checklist.observations'      => ['nullable', 'string'],
+            'insurer'                           => ['nullable', 'string', 'max:255'],
+            'claim_number'                      => ['nullable', 'string', 'max:255'],
+            'insurance_status'                  => ['nullable', 'string', 'in:aguardando,aprovado,recusado'],
+            'estimated_delivery'                => ['nullable', 'date'],
             'items'                             => ['nullable', 'array'],
             'items.*.description'               => ['required', 'string', 'max:255'],
             'items.*.quantity'                  => ['required', 'numeric', 'min:0.001'],
@@ -57,9 +62,14 @@ class ServiceHistoryController extends Controller
                 'mileage'         => $validated['mileage'],
                 'amount'          => $amount,
                 'notes'           => $validated['notes'] ?? null,
-                'return_date'     => $validated['return_date'] ?? null,
-                'return_reason'   => $validated['return_reason'] ?? null,
-                'entry_checklist' => $validated['entry_checklist'] ?? null,
+                'return_date'      => $validated['return_date'] ?? null,
+                'return_reason'    => $validated['return_reason'] ?? null,
+                'entry_checklist'  => $validated['entry_checklist'] ?? null,
+                'insurer'             => $validated['insurer'] ?? null,
+                'claim_number'        => $validated['claim_number'] ?? null,
+                'insurance_status'    => $validated['insurance_status'] ?? null,
+                'estimated_delivery'  => $validated['estimated_delivery'] ?? null,
+                'tracking_token'      => Str::random(32),
             ]);
 
             foreach ($items as $item) {
@@ -74,6 +84,33 @@ class ServiceHistoryController extends Controller
         });
 
         return response()->json($history, 201);
+    }
+
+    public function update(Request $request, Vehicle $vehicle, ServiceHistory $serviceHistory): JsonResponse
+    {
+        abort_if($vehicle->user_id !== auth()->id(), 403);
+        abort_if($serviceHistory->vehicle_id !== $vehicle->id, 404);
+
+        $validated = $request->validate([
+            'service_date'                      => ['required', 'date'],
+            'description'                       => ['required', 'string'],
+            'mileage'                           => ['required', 'integer', 'min:0'],
+            'notes'                             => ['nullable', 'string'],
+            'return_date'                       => ['nullable', 'date'],
+            'return_reason'                     => ['nullable', 'string', 'max:255'],
+            'insurer'                           => ['nullable', 'string', 'max:255'],
+            'claim_number'                      => ['nullable', 'string', 'max:255'],
+            'insurance_status'                  => ['nullable', 'string', 'in:aguardando,aprovado,recusado'],
+            'estimated_delivery'                => ['nullable', 'date'],
+        ]);
+
+        $serviceHistory->update($validated);
+
+        if ($validated['mileage'] > $vehicle->mileage) {
+            $vehicle->update(['mileage' => $validated['mileage']]);
+        }
+
+        return response()->json($serviceHistory->load('items'));
     }
 
     public function checklistPdf(Vehicle $vehicle, ServiceHistory $serviceHistory): Response
@@ -91,6 +128,15 @@ class ServiceHistoryController extends Controller
         $scratches   = ! empty($checklist['scratches']) ? '&#10003;' : '&#9633;';
         $dents       = ! empty($checklist['dents'])     ? '&#10003;' : '&#9633;';
         $observations = $checklist['observations'] ?? '—';
+
+        $insurer         = $serviceHistory->insurer ?? null;
+        $claimNumber     = $serviceHistory->claim_number ?? null;
+        $insuranceStatus = $serviceHistory->insurance_status ?? null;
+        $insuranceStatusLabels = ['aguardando' => 'Aguardando aprovação', 'aprovado' => 'Aprovado', 'recusado' => 'Recusado'];
+        $insuranceStatusLabel  = $insuranceStatus ? ($insuranceStatusLabels[$insuranceStatus] ?? $insuranceStatus) : null;
+        $insuranceColors = ['aguardando' => '#b45309', 'aprovado' => '#15803d', 'recusado' => '#dc2626'];
+        $insuranceColor  = $insuranceStatus ? ($insuranceColors[$insuranceStatus] ?? '#374151') : '#374151';
+        $hasInsurance    = $insurer || $claimNumber || $insuranceStatus;
 
         $plate       = $vehicle->plate;
         $brand       = $vehicle->brand;
@@ -137,6 +183,17 @@ class ServiceHistoryController extends Controller
             . '<div style="font-weight:bold;margin-bottom:4px;">Servi&ccedil;o Solicitado</div>'
             . '<div style="color:#374151;">' . $description . '</div>'
             . '</div>'
+            . ($hasInsurance ? (
+                '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:16px;">'
+                . '<div style="font-weight:bold;margin-bottom:10px;font-size:13px;">Informa&ccedil;&otilde;es do Seguro</div>'
+                . '<table style="width:100%;border-collapse:collapse;"><tr>'
+                . '<td style="padding:4px 0;width:50%"><strong>Seguradora:</strong> ' . ($insurer ?? '—') . '</td>'
+                . '<td style="padding:4px 0"><strong>N&ordm; Sinistro:</strong> ' . ($claimNumber ?? '—') . '</td>'
+                . '</tr><tr>'
+                . '<td colspan="2" style="padding:4px 0"><strong>Status:</strong> <span style="color:' . $insuranceColor . ';font-weight:bold;">' . ($insuranceStatusLabel ?? '—') . '</span></td>'
+                . '</tr></table>'
+                . '</div>'
+            ) : '')
             . '<div style="margin-top:40px;"><table style="width:100%;border-collapse:collapse;"><tr>'
             . '<td style="width:45%;text-align:center;padding-top:8px;"><div style="border-top:1px solid #111;padding-top:6px;font-size:11px;color:#6b7280;">Assinatura do Cliente</div></td>'
             . '<td style="width:10%;"></td>'
@@ -165,6 +222,55 @@ class ServiceHistoryController extends Controller
         return response($mpdf->Output('', 'S'), 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    public function updateStatus(Request $request, Vehicle $vehicle, ServiceHistory $serviceHistory): JsonResponse
+    {
+        abort_if($vehicle->user_id !== auth()->id(), 403);
+        abort_if($serviceHistory->vehicle_id !== $vehicle->id, 404);
+
+        $validated = $request->validate([
+            'service_status' => ['required', 'string', 'in:recebido,em_diagnostico,aguardando_pecas,em_servico,pronto,entregue'],
+        ]);
+
+        $serviceHistory->update($validated);
+
+        return response()->json($serviceHistory);
+    }
+
+    public function publicShow(string $token): JsonResponse
+    {
+        $history = ServiceHistory::with(['vehicle.customer', 'items'])
+            ->where('tracking_token', $token)
+            ->firstOrFail();
+
+        $vehicle = $history->vehicle;
+
+        return response()->json([
+            'id'                 => $history->id,
+            'description'        => $history->description,
+            'service_date'       => $history->service_date?->format('Y-m-d'),
+            'estimated_delivery' => $history->estimated_delivery?->format('Y-m-d'),
+            'notes'              => $history->notes,
+            'service_status'     => $history->service_status ?? 'recebido',
+            'amount'             => $history->amount,
+            'items'              => $history->items->map(fn ($i) => [
+                'description' => $i->description,
+                'quantity'    => $i->quantity,
+                'unit_price'  => $i->unit_price,
+            ]),
+            'vehicle' => [
+                'plate' => $vehicle->plate,
+                'brand' => $vehicle->brand,
+                'model' => $vehicle->model,
+                'year'  => $vehicle->year,
+                'color' => $vehicle->color,
+            ],
+            'customer' => $vehicle->customer ? [
+                'name'  => $vehicle->customer->name,
+                'phone' => $vehicle->customer->phone,
+            ] : null,
         ]);
     }
 

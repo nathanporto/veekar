@@ -5,6 +5,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const isPublic = publicRoutes.includes(to.path)
     || to.path.startsWith('/orcamento/')
+    || to.path.startsWith('/acompanhar/')
 
   if (!token.value && !isPublic) {
     return navigateTo('/login')

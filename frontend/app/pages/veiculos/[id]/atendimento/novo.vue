@@ -23,10 +23,19 @@ const form = reactive({
   description: '',
   mileage: 0,
   notes: '',
+  estimated_delivery: '',
 })
 
 const items = ref<Item[]>([])
 const useItems = ref(false)
+
+// Seguro
+const useInsurance = ref(false)
+const insurance = reactive({
+  insurer: '',
+  claim_number: '',
+  insurance_status: 'aguardando' as 'aguardando' | 'aprovado' | 'recusado',
+})
 
 // Agendamento de retorno
 const useReturn = ref(false)
@@ -75,9 +84,13 @@ async function submit() {
       description: form.description,
       mileage: Number(form.mileage),
       notes: form.notes || null,
+      estimated_delivery: form.estimated_delivery || null,
       return_date: useReturn.value && returnDate.value ? returnDate.value : null,
       return_reason: useReturn.value && returnReason.value ? returnReason.value : null,
       entry_checklist: useChecklist.value ? { ...checklist } : null,
+      insurer: useInsurance.value && insurance.insurer ? insurance.insurer : null,
+      claim_number: useInsurance.value && insurance.claim_number ? insurance.claim_number : null,
+      insurance_status: useInsurance.value ? insurance.insurance_status : null,
     }
 
     if (useItems.value && items.value.length > 0) {
@@ -206,6 +219,20 @@ async function submit() {
         </div>
 
         <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Previsão de Entrega
+            <span class="text-gray-400 font-normal">(opcional)</span>
+          </label>
+          <input
+            v-model="form.estimated_delivery"
+            type="date"
+            :min="today"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p class="text-xs text-gray-400 mt-1">Quando o veículo estará pronto para retirada</p>
+        </div>
+
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-1.5">Descrição do Serviço *</label>
           <textarea
             v-model="form.description"
@@ -228,6 +255,74 @@ async function submit() {
             class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
+      </div>
+
+      <!-- Seguro -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Seguro</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Registre seguradora, sinistro e status da aprovação</p>
+          </div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <div
+              class="relative w-10 h-5 rounded-full transition-colors"
+              :class="useInsurance ? 'bg-blue-600' : 'bg-gray-300'"
+              @click="useInsurance = !useInsurance"
+            >
+              <div
+                class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                :class="useInsurance ? 'translate-x-5' : 'translate-x-0.5'"
+              />
+            </div>
+            <span class="text-sm text-gray-600">Preencher</span>
+          </label>
+        </div>
+
+        <template v-if="useInsurance">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Seguradora</label>
+              <input
+                v-model="insurance.insurer"
+                type="text"
+                placeholder="Ex: Porto Seguro, Bradesco..."
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Nº do Sinistro</label>
+              <input
+                v-model="insurance.claim_number"
+                type="text"
+                placeholder="Ex: 2024/123456"
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status do Seguro</label>
+            <div class="flex gap-2">
+              <button
+                v-for="opt in [{ value: 'aguardando', label: 'Aguardando aprovação', color: 'yellow' }, { value: 'aprovado', label: 'Seguro aprovado', color: 'green' }, { value: 'recusado', label: 'Seguro recusado', color: 'red' }]"
+                :key="opt.value"
+                type="button"
+                class="flex-1 py-2 text-sm font-medium rounded-lg border transition-colors"
+                :class="insurance.insurance_status === opt.value
+                  ? opt.value === 'aguardando' ? 'bg-yellow-500 text-white border-yellow-500'
+                    : opt.value === 'aprovado' ? 'bg-green-600 text-white border-green-600'
+                    : 'bg-red-500 text-white border-red-500'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'"
+                @click="insurance.insurance_status = opt.value as typeof insurance.insurance_status"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <p v-else class="text-sm text-gray-400">Ative para registrar informações de seguro.</p>
       </div>
 
       <!-- Agendamento de retorno -->

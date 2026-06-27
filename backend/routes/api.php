@@ -13,9 +13,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json(['status' => 'ok', 'app' => 'Veekar API']));
 
-// Orçamentos públicos — sem auth
+// Rotas públicas — sem auth
 Route::get('/public/quotes/{token}', [QuoteController::class, 'publicShow']);
 Route::post('/public/quotes/{token}/respond', [QuoteController::class, 'respond']);
+Route::get('/public/service/{token}', [ServiceHistoryController::class, 'publicShow']);
 
 // Stripe webhook — público, sem auth
 Route::post('/webhook/stripe', [SubscriptionController::class, 'webhook']);
@@ -44,6 +45,8 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/recent-services', [DashboardController::class, 'recentServices']);
     Route::get('/dashboard/upcoming-returns', [DashboardController::class, 'upcomingReturns']);
+    Route::get('/dashboard/agenda', [DashboardController::class, 'agenda']);
+    Route::get('/dashboard/kanban', [DashboardController::class, 'kanban']);
 
     Route::get('/reports/financial', [ReportController::class, 'financial']);
     Route::get('/reports/financial/pdf', [ReportController::class, 'exportPdf']);
@@ -58,5 +61,7 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
     Route::get('vehicles/{vehicle}/service-histories', [ServiceHistoryController::class, 'index']);
     Route::post('vehicles/{vehicle}/service-histories', [ServiceHistoryController::class, 'store']);
     Route::get('vehicles/{vehicle}/service-histories/{serviceHistory}/checklist-pdf', [ServiceHistoryController::class, 'checklistPdf']);
+    Route::put('vehicles/{vehicle}/service-histories/{serviceHistory}', [ServiceHistoryController::class, 'update']);
+    Route::patch('vehicles/{vehicle}/service-histories/{serviceHistory}/status', [ServiceHistoryController::class, 'updateStatus']);
     Route::delete('vehicles/{vehicle}/service-histories/{serviceHistory}', [ServiceHistoryController::class, 'destroy']);
 });
