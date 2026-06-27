@@ -5,6 +5,8 @@ import type { Vehicle } from '~/types'
 
 const vehiclesStore = useVehiclesStore()
 const historyStore = useServiceHistoryStore()
+const config = useRuntimeConfig()
+const token = useCookie('veekar_token')
 const route = useRoute()
 const id = Number(route.params.id)
 
@@ -37,8 +39,38 @@ async function doDeleteHistory() {
   showDeleteModal.value = false
 }
 
-function formatDate(date: string) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')
+function parseDate(date: string | null | undefined): Date | null {
+  if (!date) return null
+  const d = new Date(date.includes('T') ? date : date + 'T00:00:00')
+  return isNaN(d.getTime()) ? null : d
+}
+
+function formatDate(date: string | null | undefined) {
+  const d = parseDate(date)
+  return d ? d.toLocaleDateString('pt-BR') : '—'
+}
+
+function daysUntil(date: string | null | undefined) {
+  const d = parseDate(date)
+  if (!d) return ''
+  const diff = Math.ceil((d.getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000)
+  if (diff < 0) return `${Math.abs(diff)}d atraso`
+  if (diff === 0) return 'hoje'
+  return `em ${diff}d`
+}
+
+async function downloadChecklist(historyId: number) {
+  const res = await fetch(`${config.public.apiBase}/vehicles/${id}/service-histories/${historyId}/checklist-pdf`, {
+    headers: { Authorization: `Bearer ${token.value}` },
+  })
+  if (!res.ok) return
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `checklist-${historyId}.pdf`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function formatCurrency(value: string | null) {
@@ -204,6 +236,29 @@ function formatCurrency(value: string | null) {
                 </div>
                 <p class="text-sm text-gray-900 font-medium">{{ h.description }}</p>
                 <p v-if="h.notes" class="text-sm text-gray-500 mt-1">{{ h.notes }}</p>
+
+                <!-- Retorno agendado -->
+                <div v-if="h.return_date" class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
+                  :class="new Date(h.return_date + 'T00:00:00') < new Date() ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Retorno {{ formatDate(h.return_date) }} ({{ daysUntil(h.return_date) }})
+                  <span v-if="h.return_reason" class="text-opacity-80">· {{ h.return_reason }}</span>
+                </div>
+
+                <!-- Botão checklist PDF -->
+                <button
+                  v-if="h.entry_checklist"
+                  type="button"
+                  class="mt-2 ml-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  @click.stop="downloadChecklist(h.id)"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Checklist PDF
+                </button>
 
                 <!-- Itens do atendimento -->
                 <div v-if="h.items && h.items.length > 0" class="mt-3 border border-gray-100 rounded-lg overflow-hidden">

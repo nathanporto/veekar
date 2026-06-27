@@ -7,18 +7,28 @@ const api = useApi()
 const reportsStore = useReportsStore()
 const quotesStore = useQuotesStore()
 
+interface UpcomingReturn {
+  id: number
+  return_date: string
+  return_reason: string | null
+  vehicle: Vehicle & { customer: Customer }
+}
+
 const stats = ref({ customers: 0, vehicles: 0, services: 0 })
 const recentServices = ref<(ServiceHistory & { vehicle: Vehicle & { customer: Customer } })[]>([])
+const upcomingReturns = ref<UpcomingReturn[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [s, r] = await Promise.all([
+    const [s, r, u] = await Promise.all([
       api.get<typeof stats.value>('/dashboard/stats'),
       api.get<typeof recentServices.value>('/dashboard/recent-services'),
+      api.get<UpcomingReturn[]>('/dashboard/upcoming-returns'),
     ])
     stats.value = s
     recentServices.value = r
+    upcomingReturns.value = u
     reportsStore.fetchFinancial()
     quotesStore.fetchQuotes()
   } finally {
@@ -26,8 +36,24 @@ onMounted(async () => {
   }
 })
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('pt-BR')
+function parseDate(date: string | null | undefined): Date | null {
+  if (!date) return null
+  const d = new Date(date.includes('T') ? date : date + 'T00:00:00')
+  return isNaN(d.getTime()) ? null : d
+}
+
+function formatDate(date: string | null | undefined) {
+  const d = parseDate(date)
+  return d ? d.toLocaleDateString('pt-BR') : '—'
+}
+
+function daysUntil(date: string | null | undefined) {
+  const d = parseDate(date)
+  if (!d) return ''
+  const diff = Math.ceil((d.getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000)
+  if (diff < 0) return `${Math.abs(diff)}d atraso`
+  if (diff === 0) return 'hoje'
+  return `em ${diff}d`
 }
 
 function formatCurrency(value: string | null) {
@@ -116,6 +142,42 @@ function formatCurrency(value: string | null) {
         </div>
       </div>
     </NuxtLink>
+
+    <!-- Widget retornos próximos -->
+    <div v-if="upcomingReturns.length > 0" class="bg-white rounded-xl shadow-sm border border-orange-100">
+      <div class="px-6 py-4 border-b border-orange-100 flex items-center gap-2">
+        <svg class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <h2 class="text-base font-semibold text-gray-900">Retornos Próximos</h2>
+        <span class="ml-auto text-xs text-gray-400">próximos 30 dias</span>
+      </div>
+      <div class="divide-y divide-gray-50">
+        <div
+          v-for="r in upcomingReturns"
+          :key="r.id"
+          class="px-6 py-3 flex items-center justify-between gap-4 hover:bg-orange-50 cursor-pointer transition-colors"
+          @click="$router.push(`/veiculos/${r.vehicle?.id}`)"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded flex-shrink-0">
+              {{ r.vehicle?.plate }}
+            </span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">{{ r.vehicle?.customer?.name }}</p>
+              <p v-if="r.return_reason" class="text-xs text-gray-500 truncate">{{ r.return_reason }}</p>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <p class="text-sm font-semibold text-gray-900">{{ formatDate(r.return_date) }}</p>
+            <p class="text-xs font-medium"
+              :class="new Date(r.return_date + 'T00:00:00') < new Date() ? 'text-red-500' : 'text-orange-500'">
+              {{ daysUntil(r.return_date) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
       <div class="px-6 py-4 border-b border-gray-100">

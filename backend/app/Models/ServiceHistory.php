@@ -15,13 +15,18 @@ class ServiceHistory extends Model
         'mileage',
         'amount',
         'notes',
+        'return_date',
+        'return_reason',
+        'entry_checklist',
     ];
 
     protected function casts(): array
     {
         return [
-            'service_date' => 'date',
-            'amount'       => 'decimal:2',
+            'service_date'    => 'date',
+            'return_date'     => 'date',
+            'amount'          => 'decimal:2',
+            'entry_checklist' => 'array',
         ];
     }
 

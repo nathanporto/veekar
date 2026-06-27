@@ -43,6 +43,7 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware(['auth:api', 'subscription'])->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/recent-services', [DashboardController::class, 'recentServices']);
+    Route::get('/dashboard/upcoming-returns', [DashboardController::class, 'upcomingReturns']);
 
     Route::get('/reports/financial', [ReportController::class, 'financial']);
     Route::get('/reports/financial/pdf', [ReportController::class, 'exportPdf']);
@@ -56,5 +57,6 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
 
     Route::get('vehicles/{vehicle}/service-histories', [ServiceHistoryController::class, 'index']);
     Route::post('vehicles/{vehicle}/service-histories', [ServiceHistoryController::class, 'store']);
+    Route::get('vehicles/{vehicle}/service-histories/{serviceHistory}/checklist-pdf', [ServiceHistoryController::class, 'checklistPdf']);
     Route::delete('vehicles/{vehicle}/service-histories/{serviceHistory}', [ServiceHistoryController::class, 'destroy']);
 });

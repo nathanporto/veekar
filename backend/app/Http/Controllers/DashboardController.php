@@ -20,6 +20,21 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function upcomingReturns(): JsonResponse
+    {
+        $userId = auth()->id();
+
+        $returns = ServiceHistory::with(['vehicle.customer'])
+            ->whereHas('vehicle', fn ($q) => $q->where('user_id', $userId))
+            ->whereNotNull('return_date')
+            ->whereBetween('return_date', [now()->toDateString(), now()->addDays(30)->toDateString()])
+            ->orderBy('return_date')
+            ->limit(10)
+            ->get();
+
+        return response()->json($returns);
+    }
+
     public function recentServices(): JsonResponse
     {
         $userId = auth()->id();
