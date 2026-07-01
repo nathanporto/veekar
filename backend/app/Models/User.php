@@ -19,6 +19,7 @@ class User extends Authenticatable implements JWTSubject
         'company_name',
         'document',
         'email',
+        'accepted_terms_at',
         'password',
         'email_verified_at',
         'email_verification_token',
@@ -32,8 +33,9 @@ class User extends Authenticatable implements JWTSubject
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'  => 'datetime',
+            'accepted_terms_at'  => 'datetime',
+            'password'           => 'hashed',
         ];
     }
 

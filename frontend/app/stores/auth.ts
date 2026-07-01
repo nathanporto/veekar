@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
     await navigateTo('/dashboard')
   }
 
-  async function register(name: string, companyName: string, document: string, email: string, password: string, passwordConfirmation: string) {
+  async function register(name: string, companyName: string, document: string, email: string, password: string, passwordConfirmation: string, acceptedTerms: boolean) {
     const data = await api.post<{ token: string; user: User }>('/auth/register', {
       name,
       company_name: companyName,
@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
       email,
       password,
       password_confirmation: passwordConfirmation,
+      accepted_terms: acceptedTerms,
     })
     token.value = data.token
     user.value = data.user

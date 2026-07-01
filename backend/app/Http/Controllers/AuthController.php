@@ -16,19 +16,21 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'company_name' => ['required', 'string', 'max:255'],
-            'document'     => ['required', 'string', 'max:18', 'unique:users,document'],
-            'email'        => ['required', 'email', 'unique:users,email'],
-            'password'     => ['required', 'confirmed', Password::min(8)],
+            'name'           => ['required', 'string', 'max:255'],
+            'company_name'   => ['required', 'string', 'max:255'],
+            'document'       => ['required', 'string', 'max:18', 'unique:users,document'],
+            'email'          => ['required', 'email', 'unique:users,email'],
+            'password'       => ['required', 'confirmed', Password::min(8)],
+            'accepted_terms' => ['required', 'accepted'],
         ]);
 
         $user = User::create([
-            'name'         => $validated['name'],
-            'company_name' => $validated['company_name'],
-            'document'     => $validated['document'],
-            'email'        => $validated['email'],
-            'password'     => Hash::make($validated['password']),
+            'name'              => $validated['name'],
+            'company_name'      => $validated['company_name'],
+            'document'          => $validated['document'],
+            'email'             => $validated['email'],
+            'password'          => Hash::make($validated['password']),
+            'accepted_terms_at' => now(),
         ]);
 
         $user->subscription()->create(['status' => 'trial']);

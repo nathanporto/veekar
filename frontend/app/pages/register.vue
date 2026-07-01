@@ -18,6 +18,7 @@ const loading = ref(false)
 const error = ref('')
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+const acceptedTerms = ref(false)
 
 function onDocumentInput(e: Event) {
   form.document = applyMask((e.target as HTMLInputElement).value)
@@ -46,12 +47,16 @@ async function submit() {
     error.value = documentError.value || 'Informe um CPF ou CNPJ válido'
     return
   }
+  if (!acceptedTerms.value) {
+    error.value = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade'
+    return
+  }
 
   loading.value = true
   error.value = ''
 
   try {
-    await auth.register(form.name, form.companyName, form.document, form.email, form.password, form.passwordConfirmation)
+    await auth.register(form.name, form.companyName, form.document, form.email, form.password, form.passwordConfirmation, acceptedTerms.value)
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Erro ao criar conta'
   } finally {
@@ -212,6 +217,23 @@ async function submit() {
           </p>
         </div>
 
+        <!-- Aceite dos termos -->
+        <div class="flex items-start gap-3 pt-1">
+          <input
+            id="accept-terms"
+            v-model="acceptedTerms"
+            type="checkbox"
+            class="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+          <label for="accept-terms" class="text-xs text-gray-600 leading-relaxed cursor-pointer">
+            Li e concordo com os
+            <NuxtLink to="/termos" target="_blank" class="text-blue-600 hover:underline font-medium">Termos de Uso</NuxtLink>
+            e a
+            <NuxtLink to="/privacidade" target="_blank" class="text-blue-600 hover:underline font-medium">Política de Privacidade</NuxtLink>
+            do Veekar, incluindo o tratamento de dados conforme a LGPD.
+          </label>
+        </div>
+
         <div v-if="error" class="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">
           {{ error }}
         </div>
@@ -219,7 +241,7 @@ async function submit() {
         <button
           type="submit"
           class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors disabled:opacity-60"
-          :disabled="loading || (!!form.passwordConfirmation && form.password !== form.passwordConfirmation)"
+          :disabled="loading || (!!form.passwordConfirmation && form.password !== form.passwordConfirmation) || !acceptedTerms"
         >
           {{ loading ? 'Criando conta...' : 'Criar conta' }}
         </button>

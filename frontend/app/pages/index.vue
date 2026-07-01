@@ -591,6 +591,8 @@ function toggleFaq(index: number) {
           <NuxtLink to="/login" class="hover:text-gray-800 transition-colors">Entrar</NuxtLink>
           <NuxtLink to="/register" class="hover:text-gray-800 transition-colors">Criar conta</NuxtLink>
           <a href="mailto:veekarofc@gmail.com" class="hover:text-gray-800 transition-colors">Suporte</a>
+          <NuxtLink to="/termos" class="hover:text-gray-800 transition-colors">Termos de Uso</NuxtLink>
+          <NuxtLink to="/privacidade" class="hover:text-gray-800 transition-colors">Privacidade</NuxtLink>
         </div>
       </div>
     </footer>
