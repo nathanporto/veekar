@@ -575,8 +575,8 @@ function toggleFaq(index: number) {
     </section>
 
     <!-- FOOTER -->
-    <footer class="border-t border-gray-100 py-10 bg-gray-50">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer class="border-t border-gray-100 pt-10 pb-28 sm:pb-10 bg-gray-50">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:pr-28">
         <div class="flex items-center gap-2">
           <div class="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
             <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

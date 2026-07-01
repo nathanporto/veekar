@@ -23,7 +23,7 @@ definePageMeta({ layout: 'landing' })
     <main class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <div class="mb-10">
         <h1 class="text-3xl font-bold text-gray-900">Termos de Uso</h1>
-        <p class="text-gray-500 text-sm mt-2">Última atualização: 1º de julho de 2025</p>
+        <p class="text-gray-500 text-sm mt-2">Última atualização: 1º de julho de 2026</p>
       </div>
 
       <div class="prose prose-gray max-w-none space-y-8 text-gray-700 text-sm leading-relaxed">

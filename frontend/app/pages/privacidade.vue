@@ -23,7 +23,7 @@ definePageMeta({ layout: 'landing' })
     <main class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <div class="mb-10">
         <h1 class="text-3xl font-bold text-gray-900">Política de Privacidade</h1>
-        <p class="text-gray-500 text-sm mt-2">Última atualização: 1º de julho de 2025</p>
+        <p class="text-gray-500 text-sm mt-2">Última atualização: 1º de julho de 2026</p>
         <p class="text-gray-500 text-sm mt-1">Em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD)</p>
       </div>
 
