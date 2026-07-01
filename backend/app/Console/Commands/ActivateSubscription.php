@@ -26,16 +26,18 @@ class ActivateSubscription extends Command
 
         if (! $subscription) {
             Subscription::create([
-                'user_id'    => $user->id,
-                'status'     => 'active',
-                'plan'       => 'premium',
-                'started_at' => now(),
+                'user_id'             => $user->id,
+                'status'              => 'active',
+                'current_period_end'  => now()->addYear(),
             ]);
             $this->info("Assinatura criada e ativada para {$email}");
             return 0;
         }
 
-        $subscription->update(['status' => 'active']);
+        $subscription->update([
+            'status'             => 'active',
+            'current_period_end' => $subscription->current_period_end ?? now()->addYear(),
+        ]);
         $this->info("Assinatura ativada para {$email} (era: {$subscription->getOriginal('status')})");
 
         return 0;

@@ -38,11 +38,11 @@ return [
     ],
 
     'stripe' => [
-        'key'            => env('STRIPE_KEY'),
-        'secret'         => env('STRIPE_SECRET'),
-        'price_id'       => env('STRIPE_PRICE_ID'),
-        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
-        'frontend_url'   => env('FRONTEND_URL', 'http://localhost:3000'),
+        'key'             => env('STRIPE_KEY'),
+        'secret'          => env('STRIPE_SECRET'),
+        'price_id'        => env('STRIPE_PRICE_ID'),
+        'webhook_secret'  => env('STRIPE_WEBHOOK_SECRET'),
+        'frontend_url'    => env('FRONTEND_URL', 'http://localhost:3000'),
     ],
 
 ];

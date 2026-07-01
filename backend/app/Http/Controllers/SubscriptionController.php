@@ -19,14 +19,15 @@ use Stripe\Webhook;
 class SubscriptionController extends Controller
 {
     public function __construct(private EmailService $email) {}
+
     public function status(): JsonResponse
     {
         $user = auth()->user();
         $subscription = $user->subscription ?? $user->subscription()->create(['status' => 'trial']);
 
         $data = [
-            'status'              => $subscription->status,
-            'current_period_end'  => $subscription->current_period_end,
+            'status'             => $subscription->status,
+            'current_period_end' => $subscription->current_period_end,
         ];
 
         if ($subscription->isTrial()) {
@@ -40,9 +41,9 @@ class SubscriptionController extends Controller
         return response()->json($data);
     }
 
-    public function checkout(): JsonResponse
+    public function checkout(Request $request): JsonResponse
     {
-        $user = auth()->user();
+        $user         = auth()->user();
         $subscription = $user->subscription ?? $user->subscription()->create(['status' => 'trial']);
 
         Stripe::setApiKey(config('services.stripe.secret'));
@@ -85,7 +86,7 @@ class SubscriptionController extends Controller
             'expand' => ['subscription'],
         ]);
 
-        if ($session->payment_status !== 'paid') {
+        if (! in_array($session->payment_status, ['paid', 'no_payment_required'])) {
             return response()->json(['message' => 'Pagamento não confirmado'], 402);
         }
 
@@ -93,14 +94,20 @@ class SubscriptionController extends Controller
         $subscription = $user->subscription;
 
         if ($subscription && $session->customer === $subscription->stripe_customer_id) {
-            $stripeSubscription = $session->subscription;
+            $subscriptionId = is_string($session->subscription)
+                ? $session->subscription
+                : $session->subscription->id;
+
+            $stripeSubscription = StripeSubscription::retrieve($subscriptionId);
+
+            $periodEnd = $stripeSubscription->current_period_end
+                ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
+                : now()->addMonth();
 
             $subscription->update([
                 'stripe_subscription_id' => $stripeSubscription->id,
                 'status'                 => 'active',
-                'current_period_end'     => $stripeSubscription->current_period_end
-                    ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
-                    : null,
+                'current_period_end'     => $periodEnd,
             ]);
 
             rescue(fn () => $this->email->sendPaymentConfirmed($user->email, $user->name));
@@ -165,21 +172,18 @@ class SubscriptionController extends Controller
 
     private function onCheckoutCompleted(object $session): void
     {
-        $stripeSubscriptionId = $session->subscription;
-        $stripeCustomerId     = $session->customer;
+        $subscription = Subscription::where('stripe_customer_id', $session->customer)->first();
+        if (! $subscription) return;
 
-        $stripeSubscription = StripeSubscription::retrieve($stripeSubscriptionId);
+        $stripeSubscription = StripeSubscription::retrieve($session->subscription);
 
-        $subscription = Subscription::where('stripe_customer_id', $stripeCustomerId)->first();
-        if ($subscription) {
-            $subscription->update([
-                'stripe_subscription_id' => $stripeSubscriptionId,
-                'status'                 => 'active',
-                'current_period_end'     => $stripeSubscription->current_period_end
-                    ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
-                    : null,
-            ]);
-        }
+        $subscription->update([
+            'stripe_subscription_id' => $session->subscription,
+            'status'                 => 'active',
+            'current_period_end'     => $stripeSubscription->current_period_end
+                ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
+                : null,
+        ]);
     }
 
     private function onSubscriptionUpdated(object $stripeSubscription): void
