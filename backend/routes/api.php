@@ -15,17 +15,17 @@ Route::get('/health', fn () => response()->json(['status' => 'ok', 'app' => 'Vee
 
 // Rotas públicas — sem auth
 Route::get('/public/quotes/{token}', [QuoteController::class, 'publicShow']);
-Route::post('/public/quotes/{token}/respond', [QuoteController::class, 'respond']);
-Route::get('/public/service/{token}', [ServiceHistoryController::class, 'publicShow']);
+Route::post('/public/quotes/{token}/respond', [QuoteController::class, 'respond'])->middleware('throttle:10,1');
+Route::get('/public/service/{token}', [ServiceHistoryController::class, 'publicShow'])->middleware('throttle:30,1');
 
 // Stripe webhook — público, sem auth
 Route::post('/webhook/stripe', [SubscriptionController::class, 'webhook']);
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword']);
-    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,60');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:5,60');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:10,1');
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
