@@ -13,6 +13,7 @@ class Subscription extends Model
         'stripe_subscription_id',
         'status',
         'current_period_end',
+        'discount_code',
     ];
 
     protected function casts(): array

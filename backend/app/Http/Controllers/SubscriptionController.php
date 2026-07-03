@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Stripe\Checkout\Session as CheckoutSession;
 use Stripe\Customer as StripeCustomer;
+use Stripe\PromotionCode;
 use Stripe\Stripe;
 use Stripe\Subscription as StripeSubscription;
 use Stripe\Webhook;
@@ -57,15 +58,16 @@ class SubscriptionController extends Controller
         }
 
         $session = CheckoutSession::create([
-            'customer'             => $subscription->stripe_customer_id,
-            'payment_method_types' => ['card'],
-            'line_items'           => [[
+            'customer'                => $subscription->stripe_customer_id,
+            'payment_method_types'    => ['card'],
+            'line_items'              => [[
                 'price'    => config('services.stripe.price_id'),
                 'quantity' => 1,
             ]],
-            'mode'        => 'subscription',
-            'success_url' => config('services.stripe.frontend_url') . '/assinatura/sucesso?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url'  => config('services.stripe.frontend_url') . '/assinatura',
+            'mode'                    => 'subscription',
+            'allow_promotion_codes'   => true,
+            'success_url'             => config('services.stripe.frontend_url') . '/assinatura/sucesso?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url'              => config('services.stripe.frontend_url') . '/assinatura',
         ]);
 
         return response()->json(['url' => $session->url]);
@@ -83,7 +85,7 @@ class SubscriptionController extends Controller
 
         $session = CheckoutSession::retrieve([
             'id'     => $sessionId,
-            'expand' => ['subscription'],
+            'expand' => ['subscription', 'total_details.breakdown.discounts'],
         ]);
 
         if (! in_array($session->payment_status, ['paid', 'no_payment_required'])) {
@@ -104,11 +106,17 @@ class SubscriptionController extends Controller
                 ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
                 : now()->addMonth();
 
-            $subscription->update([
+            $updateData = [
                 'stripe_subscription_id' => $stripeSubscription->id,
                 'status'                 => 'active',
                 'current_period_end'     => $periodEnd,
-            ]);
+            ];
+
+            if ($discountCode = $this->extractDiscountCode($session)) {
+                $updateData['discount_code'] = $discountCode;
+            }
+
+            $subscription->update($updateData);
 
             rescue(fn () => $this->email->sendPaymentConfirmed($user->email, $user->name));
         }
@@ -177,13 +185,43 @@ class SubscriptionController extends Controller
 
         $stripeSubscription = StripeSubscription::retrieve($session->subscription);
 
-        $subscription->update([
+        $updateData = [
             'stripe_subscription_id' => $session->subscription,
             'status'                 => 'active',
             'current_period_end'     => $stripeSubscription->current_period_end
                 ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
                 : null,
+        ];
+
+        $fullSession = CheckoutSession::retrieve([
+            'id'     => $session->id,
+            'expand' => ['total_details.breakdown.discounts'],
         ]);
+
+        if ($discountCode = $this->extractDiscountCode($fullSession)) {
+            $updateData['discount_code'] = $discountCode;
+        }
+
+        $subscription->update($updateData);
+    }
+
+    private function extractDiscountCode(object $session): ?string
+    {
+        $discounts = $session->total_details->breakdown->discounts ?? [];
+
+        foreach ($discounts as $discount) {
+            $promotionCodeId = $discount->discount->promotion_code ?? null;
+
+            if ($promotionCodeId) {
+                try {
+                    return PromotionCode::retrieve($promotionCodeId)->code;
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function onSubscriptionUpdated(object $stripeSubscription): void
