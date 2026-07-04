@@ -21,6 +21,7 @@ onMounted(async () => {
     await api.get(`/subscription/verify-session?session_id=${sessionId}`)
     await subscriptionStore.fetchStatus()
     success.value = true
+    window.fbq?.('track', 'Subscribe')
   } catch {
     error.value = 'Não foi possível confirmar o pagamento. Se foi cobrado, entre em contato com o suporte.'
   } finally {
