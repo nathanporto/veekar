@@ -24,8 +24,8 @@ export interface Vehicle {
   brand: string
   model: string
   year: number
-  color: string
-  plate: string
+  color: string | null
+  plate: string | null
   mileage: number
   created_at: string
   updated_at: string
@@ -49,6 +49,7 @@ export interface ServiceHistory {
   description: string
   mileage: number
   amount: string | null
+  payment_status?: 'pendente' | 'parcial' | 'pago'
   notes: string | null
   items?: ServiceItem[]
   created_at: string
@@ -62,6 +63,17 @@ export interface SubscriptionStatus {
   vehicles_count?: number
   customers_limit?: number
   vehicles_limit?: number
+}
+
+export interface Product {
+  id: number
+  user_id: number
+  name: string
+  quantity: number
+  unit_cost: string
+  unit_price: string
+  created_at: string
+  updated_at: string
 }
 
 export interface PaginatedResponse<T> {

@@ -73,6 +73,33 @@ async function downloadChecklist(historyId: number) {
   URL.revokeObjectURL(url)
 }
 
+async function downloadClientSummary(historyId: number) {
+  const res = await fetch(`${config.public.apiBase}/vehicles/${id}/service-histories/${historyId}/client-summary-pdf`, {
+    headers: { Authorization: `Bearer ${token.value}` },
+  })
+  if (!res.ok) return
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `resumo-${historyId}.pdf`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const updatingPayment = ref<number | null>(null)
+
+async function changePaymentStatus(historyId: number, status: 'pendente' | 'parcial' | 'pago') {
+  updatingPayment.value = historyId
+  try {
+    await historyStore.updatePaymentStatus(id, historyId, status)
+  } finally {
+    updatingPayment.value = null
+  }
+}
+
+const paymentStatusLabels: Record<string, string> = { pendente: 'Pendente', parcial: 'Pago parcial', pago: 'Pago' }
+
 function formatCurrency(value: string | null) {
   if (!value) return null
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value))
@@ -114,7 +141,7 @@ function formatCurrency(value: string | null) {
           <div class="space-y-3">
             <div>
               <span class="font-mono text-2xl font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-lg inline-block tracking-widest">
-                {{ vehicle.plate }}
+                {{ vehicle.plate ?? 'Sem placa' }}
               </span>
             </div>
             <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -128,7 +155,7 @@ function formatCurrency(value: string | null) {
               </div>
               <div>
                 <span class="text-gray-500">Cor</span>
-                <p class="font-medium text-gray-900">{{ vehicle.color }}</p>
+                <p class="font-medium text-gray-900">{{ vehicle.color ?? '—' }}</p>
               </div>
               <div>
                 <span class="text-gray-500">Quilometragem</span>
@@ -233,6 +260,24 @@ function formatCurrency(value: string | null) {
                   <span v-if="h.amount" class="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded">
                     {{ formatCurrency(h.amount) }}
                   </span>
+                  <select
+                    v-if="h.amount"
+                    :value="h.payment_status ?? 'pendente'"
+                    :disabled="updatingPayment === h.id"
+                    :title="paymentStatusLabels[h.payment_status ?? 'pendente']"
+                    class="text-xs font-semibold rounded px-2 py-0.5 border-0 cursor-pointer disabled:opacity-50"
+                    :class="{
+                      'bg-red-50 text-red-600': (h.payment_status ?? 'pendente') === 'pendente',
+                      'bg-amber-50 text-amber-700': h.payment_status === 'parcial',
+                      'bg-green-50 text-green-700': h.payment_status === 'pago',
+                    }"
+                    @click.stop
+                    @change="changePaymentStatus(h.id, ($event.target as HTMLSelectElement).value as 'pendente' | 'parcial' | 'pago')"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="parcial">Pago parcial</option>
+                    <option value="pago">Pago</option>
+                  </select>
                 </div>
                 <p class="text-sm text-gray-900 font-medium">{{ h.description }}</p>
                 <p v-if="h.notes" class="text-sm text-gray-500 mt-1">{{ h.notes }}</p>
@@ -302,6 +347,19 @@ function formatCurrency(value: string | null) {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Checklist PDF
+                </button>
+
+                <!-- Botão resumo para o cliente -->
+                <button
+                  v-if="h.amount"
+                  type="button"
+                  class="mt-2 ml-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                  @click.stop="downloadClientSummary(h.id)"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Resumo do Cliente
                 </button>
 
                 <!-- Itens do atendimento -->

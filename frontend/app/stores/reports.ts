@@ -1,8 +1,19 @@
+export interface CashFlowMonth {
+  label: string
+  entradas: number
+  saidas: number
+  saldo: number
+}
+
 export interface FinancialReport {
   current_month: { total: number; count: number; avg: number }
   previous_month_total: number
   growth_percent: number | null
   chart: { label: string; amount: number }[]
+  cash_flow: {
+    current_month: CashFlowMonth
+    chart: CashFlowMonth[]
+  }
 }
 
 export const useReportsStore = defineStore('reports', () => {

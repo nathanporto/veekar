@@ -19,6 +19,16 @@ const maxChartAmount = computed(() => {
   return Math.max(...store.financial.chart.map(m => m.amount), 1)
 })
 
+const maxCashFlowAmount = computed(() => {
+  if (!store.financial) return 1
+  const all = store.financial.cash_flow.chart.flatMap(m => [m.entradas, m.saidas])
+  return Math.max(...all, 1)
+})
+
+function barWidth(value: number) {
+  return (value / maxCashFlowAmount.value) * 100
+}
+
 const currentMonth = computed(() => {
   const now = new Date()
   return now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -155,6 +165,46 @@ async function downloadPdf() {
         <div v-if="store.financial.chart.every(m => m.amount === 0)" class="text-center text-gray-400 text-sm py-4">
           Nenhum atendimento com valor registrado ainda.
         </div>
+      </div>
+
+      <!-- Entradas x Saídas -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-semibold text-gray-900 mb-1">Entradas x Saídas</h2>
+        <p class="text-gray-500 text-sm mb-6">Receita dos atendimentos + vendas de estoque vs. custo de compra de produtos</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-green-50 rounded-lg p-4">
+            <p class="text-xs text-green-700 mb-1">Entradas (mês atual)</p>
+            <p class="text-xl font-bold text-green-800">{{ formatCurrency(store.financial.cash_flow.current_month.entradas) }}</p>
+          </div>
+          <div class="bg-red-50 rounded-lg p-4">
+            <p class="text-xs text-red-600 mb-1">Saídas (mês atual)</p>
+            <p class="text-xl font-bold text-red-700">{{ formatCurrency(store.financial.cash_flow.current_month.saidas) }}</p>
+          </div>
+          <div class="rounded-lg p-4" :class="store.financial.cash_flow.current_month.saldo >= 0 ? 'bg-blue-50' : 'bg-amber-50'">
+            <p class="text-xs mb-1" :class="store.financial.cash_flow.current_month.saldo >= 0 ? 'text-blue-700' : 'text-amber-700'">Saldo (mês atual)</p>
+            <p class="text-xl font-bold" :class="store.financial.cash_flow.current_month.saldo >= 0 ? 'text-blue-800' : 'text-amber-800'">
+              {{ formatCurrency(store.financial.cash_flow.current_month.saldo) }}
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div v-for="(month, i) in store.financial.cash_flow.chart" :key="i" class="flex items-center gap-3">
+            <span class="w-14 text-gray-400 text-xs font-medium flex-shrink-0">{{ month.label }}</span>
+            <div class="flex-1 flex items-center gap-1 h-4">
+              <div class="bg-green-400 h-full rounded" :style="{ width: barWidth(month.entradas) + '%' }" />
+              <div class="bg-red-400 h-full rounded" :style="{ width: barWidth(month.saidas) + '%' }" />
+            </div>
+            <span class="text-xs text-gray-500 w-44 text-right flex-shrink-0">
+              +{{ formatCurrency(month.entradas) }} / -{{ formatCurrency(month.saidas) }}
+            </span>
+          </div>
+        </div>
+
+        <p v-if="store.financial.cash_flow.chart.every(m => m.saidas === 0)" class="text-center text-gray-400 text-sm py-4 mt-2">
+          Nenhuma saída de estoque registrada ainda. Cadastre produtos em <NuxtLink to="/estoque" class="text-blue-600 hover:underline">Estoque</NuxtLink>.
+        </p>
       </div>
 
       <!-- Mês anterior comparativo -->

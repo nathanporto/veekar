@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceHistoryController;
@@ -51,6 +52,12 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
     Route::get('/reports/financial', [ReportController::class, 'financial']);
     Route::get('/reports/financial/pdf', [ReportController::class, 'exportPdf']);
 
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+    Route::post('/products/{product}/entrada', [ProductController::class, 'registerEntrada']);
+    Route::post('/products/{product}/saida', [ProductController::class, 'registerSaida']);
+
     Route::apiResource('quotes', QuoteController::class)->only(['index', 'store', 'show', 'destroy']);
 
     Route::apiResource('customers', CustomerController::class);
@@ -63,5 +70,7 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
     Route::get('vehicles/{vehicle}/service-histories/{serviceHistory}/checklist-pdf', [ServiceHistoryController::class, 'checklistPdf']);
     Route::put('vehicles/{vehicle}/service-histories/{serviceHistory}', [ServiceHistoryController::class, 'update']);
     Route::patch('vehicles/{vehicle}/service-histories/{serviceHistory}/status', [ServiceHistoryController::class, 'updateStatus']);
+    Route::patch('vehicles/{vehicle}/service-histories/{serviceHistory}/payment-status', [ServiceHistoryController::class, 'updatePaymentStatus']);
+    Route::get('vehicles/{vehicle}/service-histories/{serviceHistory}/client-summary-pdf', [ServiceHistoryController::class, 'clientSummaryPdf']);
     Route::delete('vehicles/{vehicle}/service-histories/{serviceHistory}', [ServiceHistoryController::class, 'destroy']);
 });

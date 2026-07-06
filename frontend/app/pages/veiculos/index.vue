@@ -107,12 +107,12 @@ function useDebounceFn(fn: () => void, delay: number) {
               <td class="px-6 py-4">
                 <NuxtLink :to="`/veiculos/${v.id}`">
                   <span class="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded hover:bg-blue-100 transition-colors">
-                    {{ v.plate }}
+                    {{ v.plate ?? 'Sem placa' }}
                   </span>
                 </NuxtLink>
               </td>
               <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ v.brand }} {{ v.model }}</td>
-              <td class="px-6 py-4 text-sm text-gray-500">{{ v.year }} / {{ v.color }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ v.year }} / {{ v.color ?? '—' }}</td>
               <td class="px-6 py-4 text-sm text-gray-600">{{ v.customer?.name ?? '—' }}</td>
               <td class="px-6 py-4 text-sm text-gray-900">{{ v.mileage.toLocaleString('pt-BR') }} km</td>
               <td class="px-6 py-4">
@@ -143,12 +143,12 @@ function useDebounceFn(fn: () => void, delay: number) {
               <div class="flex items-center gap-2 mb-1">
                 <NuxtLink :to="`/veiculos/${v.id}`">
                   <span class="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                    {{ v.plate }}
+                    {{ v.plate ?? 'Sem placa' }}
                   </span>
                 </NuxtLink>
               </div>
               <p class="text-sm font-semibold text-gray-900">{{ v.brand }} {{ v.model }}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{{ v.year }} · {{ v.color }} · {{ v.mileage.toLocaleString('pt-BR') }} km</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ v.year }} · {{ v.color ?? '—' }} · {{ v.mileage.toLocaleString('pt-BR') }} km</p>
               <p v-if="v.customer" class="text-xs text-gray-400 mt-0.5">{{ v.customer.name }}</p>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0 pt-0.5">

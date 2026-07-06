@@ -6,6 +6,7 @@ const router = useRouter()
 const route = useRoute()
 const id = Number(route.params.id)
 const { applyMask, validateCpf } = useDocument()
+const { applyMask: applyPhoneMask } = usePhone()
 
 const form = reactive({ name: '', cpf: '', phone: '', email: '', notes: '' })
 const loading = ref(false)
@@ -18,7 +19,7 @@ onMounted(async () => {
     const customer = await store.fetchOne(id)
     form.name = customer.name
     form.cpf = customer.cpf ?? ''
-    form.phone = customer.phone
+    form.phone = applyPhoneMask(customer.phone)
     form.email = customer.email ?? ''
     form.notes = customer.notes ?? ''
   } catch {
@@ -30,6 +31,10 @@ onMounted(async () => {
 
 function onCpfInput(e: Event) {
   form.cpf = applyMask((e.target as HTMLInputElement).value)
+}
+
+function onPhoneInput(e: Event) {
+  form.phone = applyPhoneMask((e.target as HTMLInputElement).value)
 }
 
 const cpfError = computed(() => {
@@ -114,10 +119,14 @@ async function submit() {
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1.5">Telefone *</label>
           <input
-            v-model="form.phone"
+            :value="form.phone"
             type="tel"
+            inputmode="numeric"
             required
+            placeholder="(11) 99999-9999"
+            maxlength="15"
             class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @input="onPhoneInput"
           />
         </div>
 

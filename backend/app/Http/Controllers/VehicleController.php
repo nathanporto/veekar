@@ -66,12 +66,14 @@ class VehicleController extends Controller
             'brand'       => ['required', 'string', 'max:50'],
             'model'       => ['required', 'string', 'max:100'],
             'year'        => ['required', 'integer', 'min:1950', 'max:' . (date('Y') + 1)],
-            'color'       => ['required', 'string', 'max:50'],
-            'plate'       => ['required', 'string', 'max:10', Rule::unique('vehicles', 'plate')->where('user_id', $userId)],
+            'color'       => ['nullable', 'string', 'max:50'],
+            'plate'       => ['nullable', 'string', 'max:10', Rule::unique('vehicles', 'plate')->where('user_id', $userId)],
             'mileage'     => ['required', 'integer', 'min:0'],
         ]);
 
-        $validated['plate'] = strtoupper(preg_replace('/\s+/', '', $validated['plate']));
+        $validated['plate'] = ! empty($validated['plate'])
+            ? strtoupper(preg_replace('/\s+/', '', $validated['plate']))
+            : null;
         $validated['user_id'] = $userId;
 
         $vehicle = Vehicle::create($validated);
@@ -99,13 +101,15 @@ class VehicleController extends Controller
             'brand'       => ['sometimes', 'required', 'string', 'max:50'],
             'model'       => ['sometimes', 'required', 'string', 'max:100'],
             'year'        => ['sometimes', 'integer', 'min:1950', 'max:' . (date('Y') + 1)],
-            'color'       => ['sometimes', 'required', 'string', 'max:50'],
-            'plate'       => ['sometimes', 'required', 'string', 'max:10', Rule::unique('vehicles', 'plate')->where('user_id', $userId)->ignore($vehicle->id)],
+            'color'       => ['sometimes', 'nullable', 'string', 'max:50'],
+            'plate'       => ['sometimes', 'nullable', 'string', 'max:10', Rule::unique('vehicles', 'plate')->where('user_id', $userId)->ignore($vehicle->id)],
             'mileage'     => ['sometimes', 'integer', 'min:0'],
         ]);
 
-        if (isset($validated['plate'])) {
-            $validated['plate'] = strtoupper(preg_replace('/\s+/', '', $validated['plate']));
+        if (array_key_exists('plate', $validated)) {
+            $validated['plate'] = ! empty($validated['plate'])
+                ? strtoupper(preg_replace('/\s+/', '', $validated['plate']))
+                : null;
         }
 
         $vehicle->update($validated);

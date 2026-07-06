@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProductMovement;
 use App\Models\ServiceHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -28,7 +29,8 @@ class ReportController extends Controller
             ->whereYear('service_date', $prev->year)
             ->sum('amount');
 
-        $chart = [];
+        $chart         = [];
+        $cashFlowChart = [];
         for ($i = 5; $i >= 0; $i--) {
             $date  = $now->copy()->subMonths($i);
             $total = ServiceHistory::where($base)
@@ -39,6 +41,16 @@ class ReportController extends Controller
             $chart[] = [
                 'label'  => ucfirst($date->translatedFormat('M/y')),
                 'amount' => (float) $total,
+            ];
+
+            $entradas = (float) $total + $this->stockSalesRevenue($userId, $date);
+            $saidas   = $this->stockPurchasesCost($userId, $date);
+
+            $cashFlowChart[] = [
+                'label'    => ucfirst($date->translatedFormat('M/y')),
+                'entradas' => $entradas,
+                'saidas'   => $saidas,
+                'saldo'    => $entradas - $saidas,
             ];
         }
 
@@ -59,7 +71,31 @@ class ReportController extends Controller
             'previous_month_total' => $prevAmount,
             'growth_percent'       => $growth,
             'chart'                => $chart,
+            'cash_flow'            => [
+                'current_month' => $cashFlowChart[count($cashFlowChart) - 1],
+                'chart'         => $cashFlowChart,
+            ],
         ];
+    }
+
+    private function stockSalesRevenue(int $userId, \Carbon\Carbon $date): float
+    {
+        return (float) ProductMovement::where('type', 'saida')
+            ->whereHas('product', fn ($p) => $p->where('user_id', $userId))
+            ->whereMonth('movement_date', $date->month)
+            ->whereYear('movement_date', $date->year)
+            ->selectRaw('COALESCE(SUM(quantity * unit_price), 0) as total')
+            ->value('total');
+    }
+
+    private function stockPurchasesCost(int $userId, \Carbon\Carbon $date): float
+    {
+        return (float) ProductMovement::where('type', 'entrada')
+            ->whereHas('product', fn ($p) => $p->where('user_id', $userId))
+            ->whereMonth('movement_date', $date->month)
+            ->whereYear('movement_date', $date->year)
+            ->selectRaw('COALESCE(SUM(quantity * unit_cost), 0) as total')
+            ->value('total');
     }
 
     public function financial(): JsonResponse

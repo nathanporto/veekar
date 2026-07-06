@@ -32,5 +32,19 @@ export const useServiceHistoryStore = defineStore('serviceHistory', () => {
     histories.value = histories.value.filter(h => h.id !== historyId)
   }
 
-  return { histories, loading, fetchByVehicle, create, update, remove }
+  async function updatePaymentStatus(
+    vehicleId: number,
+    historyId: number,
+    paymentStatus: 'pendente' | 'parcial' | 'pago',
+  ): Promise<ServiceHistory> {
+    const data = await api.patch<ServiceHistory>(
+      `/vehicles/${vehicleId}/service-histories/${historyId}/payment-status`,
+      { payment_status: paymentStatus },
+    )
+    const idx = histories.value.findIndex(h => h.id === historyId)
+    if (idx !== -1) histories.value[idx] = data
+    return data
+  }
+
+  return { histories, loading, fetchByVehicle, create, update, remove, updatePaymentStatus }
 })

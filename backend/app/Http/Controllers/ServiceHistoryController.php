@@ -138,11 +138,11 @@ class ServiceHistoryController extends Controller
         $insuranceColor  = $insuranceStatus ? ($insuranceColors[$insuranceStatus] ?? '#374151') : '#374151';
         $hasInsurance    = $insurer || $claimNumber || $insuranceStatus;
 
-        $plate       = $vehicle->plate;
+        $plate       = $vehicle->plate ?? '—';
         $brand       = $vehicle->brand;
         $model       = $vehicle->model;
         $year        = $vehicle->year;
-        $color       = $vehicle->color;
+        $color       = $vehicle->color ?? '—';
         $mileage     = $serviceHistory->mileage;
         $date        = $serviceHistory->service_date->format('d/m/Y');
         $description = $serviceHistory->description;
@@ -217,7 +217,7 @@ class ServiceHistoryController extends Controller
 
         $mpdf->WriteHTML($html);
 
-        $filename = 'checklist-' . $vehicle->plate . '-' . $serviceHistory->service_date->format('Y-m-d') . '.pdf';
+        $filename = 'checklist-' . ($vehicle->plate ?: 'veiculo-' . $vehicle->id) . '-' . $serviceHistory->service_date->format('Y-m-d') . '.pdf';
 
         return response($mpdf->Output('', 'S'), 200, [
             'Content-Type'        => 'application/pdf',
@@ -237,6 +237,114 @@ class ServiceHistoryController extends Controller
         $serviceHistory->update($validated);
 
         return response()->json($serviceHistory);
+    }
+
+    public function updatePaymentStatus(Request $request, Vehicle $vehicle, ServiceHistory $serviceHistory): JsonResponse
+    {
+        abort_if($vehicle->user_id !== auth()->id(), 403);
+        abort_if($serviceHistory->vehicle_id !== $vehicle->id, 404);
+
+        $validated = $request->validate([
+            'payment_status' => ['required', 'string', 'in:pendente,parcial,pago'],
+        ]);
+
+        $serviceHistory->update($validated);
+
+        return response()->json($serviceHistory);
+    }
+
+    public function clientSummaryPdf(Vehicle $vehicle, ServiceHistory $serviceHistory): Response
+    {
+        abort_if($vehicle->user_id !== auth()->id(), 403);
+        abort_if($serviceHistory->vehicle_id !== $vehicle->id, 404);
+
+        $vehicle->load('customer');
+        $serviceHistory->load('items');
+
+        $fmt = fn (?string $v) => 'R$ ' . number_format((float) $v, 2, ',', '.');
+
+        $customerName = $vehicle->customer ? $vehicle->customer->name : '—';
+        $date         = $serviceHistory->service_date->format('d/m/Y');
+
+        $statusLabels = ['pendente' => 'Pendente', 'parcial' => 'Pago parcialmente', 'pago' => 'Pago'];
+        $statusColors = ['pendente' => '#dc2626', 'parcial' => '#b45309', 'pago' => '#16a34a'];
+        $paymentStatus = $serviceHistory->payment_status ?? 'pendente';
+        $statusLabel   = $statusLabels[$paymentStatus] ?? $paymentStatus;
+        $statusColor   = $statusColors[$paymentStatus] ?? '#374151';
+
+        $itemsRows = '';
+        foreach ($serviceHistory->items as $item) {
+            $subtotal = (float) $item->quantity * (float) $item->unit_price;
+            $itemsRows .= '<tr>'
+                . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;">' . e($item->description) . '</td>'
+                . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;text-align:center;">' . (float) $item->quantity . '</td>'
+                . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;text-align:right;">' . $fmt($item->unit_price) . '</td>'
+                . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;text-align:right;">' . $fmt((string) $subtotal) . '</td>'
+                . '</tr>';
+        }
+
+        $itemsTable = $itemsRows !== ''
+            ? '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">'
+                . '<tr><th style="text-align:left;padding:8px;background:#2563eb;color:#fff;font-size:12px;">Descrição</th>'
+                . '<th style="text-align:center;padding:8px;background:#2563eb;color:#fff;font-size:12px;">Qtd</th>'
+                . '<th style="text-align:right;padding:8px;background:#2563eb;color:#fff;font-size:12px;">Unitário</th>'
+                . '<th style="text-align:right;padding:8px;background:#2563eb;color:#fff;font-size:12px;">Subtotal</th></tr>'
+                . $itemsRows
+                . '</table>'
+            : '';
+
+        $html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"></head>'
+            . '<body style="font-family:Arial,sans-serif;font-size:13px;color:#111;margin:0;padding:0;">'
+            . '<div style="border-bottom:3px solid #2563eb;padding-bottom:12px;margin-bottom:20px;">'
+            . '<div style="font-size:22px;font-weight:bold;color:#2563eb;">Veekar</div>'
+            . '<div style="font-size:10px;color:#6b7280;">Resumo do atendimento &mdash; Data: ' . $date . '</div>'
+            . '</div>'
+            . '<div style="font-size:16px;font-weight:bold;margin-bottom:16px;">Resumo para o Cliente</div>'
+            . '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">'
+            . '<tr>'
+            . '<td style="padding:4px 0;width:50%"><strong>Cliente:</strong> ' . e($customerName) . '</td>'
+            . '<td style="padding:4px 0"><strong>Veículo:</strong> ' . e($vehicle->plate ?? '—') . ' &mdash; ' . e($vehicle->brand) . ' ' . e($vehicle->model) . '</td>'
+            . '</tr></table>'
+            . '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:16px;">'
+            . '<div style="font-weight:bold;margin-bottom:4px;">Serviço realizado</div>'
+            . '<div style="color:#374151;">' . e($serviceHistory->description) . '</div>'
+            . '</div>'
+            . $itemsTable
+            . '<table style="width:100%;border-collapse:collapse;margin-top:8px;">'
+            . '<tr>'
+            . '<td style="padding:10px 0;font-size:15px;"><strong>Valor total:</strong></td>'
+            . '<td style="padding:10px 0;font-size:15px;text-align:right;"><strong>' . $fmt($serviceHistory->amount) . '</strong></td>'
+            . '</tr><tr>'
+            . '<td style="padding:6px 0;"><strong>Situação do pagamento:</strong></td>'
+            . '<td style="padding:6px 0;text-align:right;"><span style="color:' . $statusColor . ';font-weight:bold;">' . $statusLabel . '</span></td>'
+            . '</tr></table>'
+            . '<div style="margin-top:30px;padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;font-size:11px;color:#92400e;">'
+            . 'Este documento é um resumo informativo gerado pelo Veekar e não substitui nota fiscal ou recibo oficial.'
+            . '</div>'
+            . '<div style="margin-top:20px;text-align:center;font-size:10px;color:#9ca3af;">Documento gerado pelo Veekar &middot; ' . $date . '</div>'
+            . '</body></html>';
+
+        $tmpDir = storage_path('app/mpdf-tmp');
+        if (! is_dir($tmpDir)) {
+            mkdir($tmpDir, 0775, true);
+        }
+
+        $mpdf = new Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4',
+            'margin_top'    => 15,
+            'margin_bottom' => 15,
+            'tempDir'       => $tmpDir,
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        $filename = 'resumo-' . ($vehicle->plate ?: 'veiculo-' . $vehicle->id) . '-' . $serviceHistory->service_date->format('Y-m-d') . '.pdf';
+
+        return response($mpdf->Output('', 'S'), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     public function publicShow(string $token): JsonResponse

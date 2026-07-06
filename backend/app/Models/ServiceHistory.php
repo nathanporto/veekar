@@ -24,6 +24,7 @@ class ServiceHistory extends Model
         'estimated_delivery',
         'tracking_token',
         'service_status',
+        'payment_status',
     ];
 
     protected function casts(): array
