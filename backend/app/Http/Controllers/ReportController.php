@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaymentReminder;
 use App\Models\ProductMovement;
 use App\Models\ServiceHistory;
 use Illuminate\Http\JsonResponse;
@@ -44,7 +45,7 @@ class ReportController extends Controller
             ];
 
             $entradas = (float) $total + $this->stockSalesRevenue($userId, $date);
-            $saidas   = $this->stockPurchasesCost($userId, $date);
+            $saidas   = $this->stockPurchasesCost($userId, $date) + $this->paidRemindersCost($userId, $date);
 
             $cashFlowChart[] = [
                 'label'    => ucfirst($date->translatedFormat('M/y')),
@@ -114,6 +115,16 @@ class ReportController extends Controller
             ->value('total');
     }
 
+    private function paidRemindersCost(int $userId, \Carbon\Carbon $date): float
+    {
+        return (float) PaymentReminder::where('user_id', $userId)
+            ->where('paid', true)
+            ->whereNotNull('paid_at')
+            ->whereMonth('paid_at', $date->month)
+            ->whereYear('paid_at', $date->year)
+            ->sum('amount');
+    }
+
     public function financial(): JsonResponse
     {
         return response()->json($this->getData());
@@ -142,6 +153,18 @@ class ReportController extends Controller
                 <tr>
                     <td>{$month['label']}</td>
                     <td style='text-align:right'>{$fmt($month['amount'])}</td>
+                </tr>";
+        }
+
+        $cashFlowRows = '';
+        foreach ($data['cash_flow']['chart'] as $month) {
+            $saldoColor = $month['saldo'] >= 0 ? '#16a34a' : '#dc2626';
+            $cashFlowRows .= "
+                <tr>
+                    <td>{$month['label']}</td>
+                    <td style='text-align:right;color:#16a34a'>+{$fmt($month['entradas'])}</td>
+                    <td style='text-align:right;color:#dc2626'>-{$fmt($month['saidas'])}</td>
+                    <td style='text-align:right;color:{$saldoColor};font-weight:600'>{$fmt($month['saldo'])}</td>
                 </tr>";
         }
 
@@ -194,6 +217,17 @@ class ReportController extends Controller
                 <th style='text-align:right'>Faturamento</th>
             </tr>
             {$chartRows}
+        </table>
+
+        <div class='section-title' style='margin-top:28px'>Entradas x Saídas — últimos 6 meses</div>
+        <table class='monthly'>
+            <tr>
+                <th>Mês</th>
+                <th style='text-align:right'>Entradas</th>
+                <th style='text-align:right'>Saídas</th>
+                <th style='text-align:right'>Saldo</th>
+            </tr>
+            {$cashFlowRows}
         </table>
 
         <div class='footer'>Veekar · Sistema de Histórico Automotivo · veekar.vercel.app</div>
