@@ -62,6 +62,18 @@ class ReportController extends Controller
             ? round((($currentTotal - $prevAmount) / $prevAmount) * 100, 1)
             : null;
 
+        $recebido = (float) ServiceHistory::where($base)
+            ->whereMonth('service_date', $now->month)
+            ->whereYear('service_date', $now->year)
+            ->sum('amount_paid');
+
+        $aReceber = (float) ServiceHistory::where($base)
+            ->whereMonth('service_date', $now->month)
+            ->whereYear('service_date', $now->year)
+            ->whereIn('payment_status', ['pendente', 'parcial'])
+            ->selectRaw('COALESCE(SUM(amount - amount_paid), 0) as total')
+            ->value('total');
+
         return [
             'current_month'        => [
                 'total' => $currentTotal,
@@ -74,6 +86,10 @@ class ReportController extends Controller
             'cash_flow'            => [
                 'current_month' => $cashFlowChart[count($cashFlowChart) - 1],
                 'chart'         => $cashFlowChart,
+            ],
+            'payment_summary'      => [
+                'recebido'  => $recebido,
+                'a_receber' => $aReceber,
             ],
         ];
     }

@@ -36,10 +36,11 @@ export const useServiceHistoryStore = defineStore('serviceHistory', () => {
     vehicleId: number,
     historyId: number,
     paymentStatus: 'pendente' | 'parcial' | 'pago',
+    amountPaid?: number,
   ): Promise<ServiceHistory> {
     const data = await api.patch<ServiceHistory>(
       `/vehicles/${vehicleId}/service-histories/${historyId}/payment-status`,
-      { payment_status: paymentStatus },
+      { payment_status: paymentStatus, amount_paid: amountPaid },
     )
     const idx = histories.value.findIndex(h => h.id === historyId)
     if (idx !== -1) histories.value[idx] = data

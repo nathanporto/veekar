@@ -14,6 +14,10 @@ export interface FinancialReport {
     current_month: CashFlowMonth
     chart: CashFlowMonth[]
   }
+  payment_summary: {
+    recebido: number
+    a_receber: number
+  }
 }
 
 export const useReportsStore = defineStore('reports', () => {

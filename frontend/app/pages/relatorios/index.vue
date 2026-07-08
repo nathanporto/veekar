@@ -167,6 +167,26 @@ async function downloadPdf() {
         </div>
       </div>
 
+      <!-- Recebido x A receber -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-base font-semibold text-gray-900">Recebido x A receber</h2>
+          <NuxtLink to="/pagamentos" class="text-xs text-blue-600 hover:underline">Ver pagamentos →</NuxtLink>
+        </div>
+        <p class="text-gray-500 text-sm mb-6">Baseado no status de pagamento marcado em cada atendimento do mês</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-green-50 rounded-lg p-4">
+            <p class="text-xs text-green-700 mb-1">Recebido</p>
+            <p class="text-xl font-bold text-green-800">{{ formatCurrency(store.financial.payment_summary.recebido) }}</p>
+          </div>
+          <div class="bg-amber-50 rounded-lg p-4">
+            <p class="text-xs text-amber-700 mb-1">A receber (pendente/parcial)</p>
+            <p class="text-xl font-bold text-amber-800">{{ formatCurrency(store.financial.payment_summary.a_receber) }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Entradas x Saídas -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 class="text-base font-semibold text-gray-900 mb-1">Entradas x Saídas</h2>

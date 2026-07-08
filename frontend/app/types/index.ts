@@ -50,6 +50,7 @@ export interface ServiceHistory {
   mileage: number
   amount: string | null
   payment_status?: 'pendente' | 'parcial' | 'pago'
+  amount_paid?: string
   notes: string | null
   items?: ServiceItem[]
   created_at: string
@@ -63,6 +64,18 @@ export interface SubscriptionStatus {
   vehicles_count?: number
   customers_limit?: number
   vehicles_limit?: number
+}
+
+export interface PaymentReminder {
+  id: number
+  user_id: number
+  description: string
+  amount: string | null
+  due_date: string
+  paid: boolean
+  paid_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Product {

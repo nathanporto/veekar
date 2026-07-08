@@ -25,6 +25,7 @@ class ServiceHistory extends Model
         'tracking_token',
         'service_status',
         'payment_status',
+        'amount_paid',
     ];
 
     protected function casts(): array
@@ -34,6 +35,7 @@ class ServiceHistory extends Model
             'return_date'         => 'date',
             'estimated_delivery'  => 'date',
             'amount'          => 'decimal:2',
+            'amount_paid'     => 'decimal:2',
             'entry_checklist' => 'array',
         ];
     }

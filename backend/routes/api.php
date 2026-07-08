@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentReminderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\ReportController;
@@ -46,8 +48,12 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/recent-services', [DashboardController::class, 'recentServices']);
     Route::get('/dashboard/upcoming-returns', [DashboardController::class, 'upcomingReturns']);
+    Route::get('/dashboard/upcoming-payment-reminders', [DashboardController::class, 'upcomingPaymentReminders']);
     Route::get('/dashboard/agenda', [DashboardController::class, 'agenda']);
     Route::get('/dashboard/kanban', [DashboardController::class, 'kanban']);
+
+    Route::get('/payments', [PaymentController::class, 'index']);
+    Route::apiResource('payment-reminders', PaymentReminderController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/reports/financial', [ReportController::class, 'financial']);
     Route::get('/reports/financial/pdf', [ReportController::class, 'exportPdf']);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ServiceHistory, Vehicle, Customer } from '~/types'
+import type { ServiceHistory, Vehicle, Customer, PaymentReminder } from '~/types'
 import { useReportsStore } from '~/stores/reports'
 import { useQuotesStore } from '~/stores/quotes'
 
@@ -17,18 +17,21 @@ interface UpcomingReturn {
 const stats = ref({ customers: 0, vehicles: 0, services: 0 })
 const recentServices = ref<(ServiceHistory & { vehicle: Vehicle & { customer: Customer } })[]>([])
 const upcomingReturns = ref<UpcomingReturn[]>([])
+const upcomingPaymentReminders = ref<PaymentReminder[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [s, r, u] = await Promise.all([
+    const [s, r, u, pr] = await Promise.all([
       api.get<typeof stats.value>('/dashboard/stats'),
       api.get<typeof recentServices.value>('/dashboard/recent-services'),
       api.get<UpcomingReturn[]>('/dashboard/upcoming-returns'),
+      api.get<PaymentReminder[]>('/dashboard/upcoming-payment-reminders'),
     ])
     stats.value = s
     recentServices.value = r
     upcomingReturns.value = u
+    upcomingPaymentReminders.value = pr
     reportsStore.fetchFinancial()
     quotesStore.fetchQuotes()
   } finally {
@@ -173,6 +176,36 @@ function formatCurrency(value: string | null) {
             <p class="text-xs font-medium"
               :class="new Date(r.return_date + 'T00:00:00') < new Date() ? 'text-red-500' : 'text-orange-500'">
               {{ daysUntil(r.return_date) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget lembretes de pagamento -->
+    <div v-if="upcomingPaymentReminders.length > 0" class="bg-white rounded-xl shadow-sm border border-red-100">
+      <div class="px-6 py-4 border-b border-red-100 flex items-center gap-2">
+        <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <h2 class="text-base font-semibold text-gray-900">Lembretes de Pagamento</h2>
+        <span class="ml-auto text-xs text-gray-400">próximos 30 dias</span>
+      </div>
+      <div class="divide-y divide-gray-50">
+        <div
+          v-for="r in upcomingPaymentReminders"
+          :key="r.id"
+          class="px-6 py-3 flex items-center justify-between gap-4 hover:bg-red-50 cursor-pointer transition-colors"
+          @click="$router.push('/pagamentos')"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">{{ r.description }}</p>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <p v-if="r.amount" class="text-sm font-semibold text-gray-900">{{ formatCurrency(r.amount) }}</p>
+            <p class="text-xs font-medium"
+              :class="new Date(r.due_date + 'T00:00:00') < new Date() ? 'text-red-500' : 'text-amber-600'">
+              {{ formatDate(r.due_date) }} ({{ daysUntil(r.due_date) }})
             </p>
           </div>
         </div>

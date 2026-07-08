@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\PaymentReminder;
 use App\Models\ServiceHistory;
 use App\Models\Vehicle;
 use Illuminate\Http\JsonResponse;
@@ -74,6 +75,20 @@ class DashboardController extends Controller
             ->get();
 
         return response()->json($returns);
+    }
+
+    public function upcomingPaymentReminders(): JsonResponse
+    {
+        $userId = auth()->id();
+
+        $reminders = PaymentReminder::where('user_id', $userId)
+            ->where('paid', false)
+            ->whereBetween('due_date', [now()->toDateString(), now()->addDays(30)->toDateString()])
+            ->orderBy('due_date')
+            ->limit(10)
+            ->get();
+
+        return response()->json($reminders);
     }
 
     public function recentServices(): JsonResponse

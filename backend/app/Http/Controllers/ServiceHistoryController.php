@@ -246,9 +246,28 @@ class ServiceHistoryController extends Controller
 
         $validated = $request->validate([
             'payment_status' => ['required', 'string', 'in:pendente,parcial,pago'],
+            'amount_paid'    => [
+                'required_if:payment_status,parcial',
+                'nullable',
+                'numeric',
+                'min:0.01',
+                'max:' . ($serviceHistory->amount ?? 0),
+            ],
+        ], [
+            'amount_paid.required_if' => 'Informe o valor pago.',
+            'amount_paid.max'         => 'O valor pago não pode ser maior que o valor total do atendimento.',
         ]);
 
-        $serviceHistory->update($validated);
+        $amountPaid = match ($validated['payment_status']) {
+            'pago'     => $serviceHistory->amount,
+            'parcial'  => $validated['amount_paid'],
+            'pendente' => 0,
+        };
+
+        $serviceHistory->update([
+            'payment_status' => $validated['payment_status'],
+            'amount_paid'    => $amountPaid,
+        ]);
 
         return response()->json($serviceHistory);
     }
@@ -280,6 +299,18 @@ class ServiceHistoryController extends Controller
                 . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;text-align:center;">' . (float) $item->quantity . '</td>'
                 . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;text-align:right;">' . $fmt($item->unit_price) . '</td>'
                 . '<td style="padding:8px;border-bottom:1px solid #f3f4f6;text-align:right;">' . $fmt((string) $subtotal) . '</td>'
+                . '</tr>';
+        }
+
+        $extraPaymentRows = '';
+        if ($paymentStatus === 'parcial') {
+            $remaining = (float) $serviceHistory->amount - (float) $serviceHistory->amount_paid;
+            $extraPaymentRows = '<tr>'
+                . '<td style="padding:6px 0;">Valor pago:</td>'
+                . '<td style="padding:6px 0;text-align:right;">' . $fmt($serviceHistory->amount_paid) . '</td>'
+                . '</tr><tr>'
+                . '<td style="padding:6px 0;">Valor restante:</td>'
+                . '<td style="padding:6px 0;text-align:right;">' . $fmt((string) $remaining) . '</td>'
                 . '</tr>';
         }
 
@@ -317,7 +348,9 @@ class ServiceHistoryController extends Controller
             . '</tr><tr>'
             . '<td style="padding:6px 0;"><strong>Situação do pagamento:</strong></td>'
             . '<td style="padding:6px 0;text-align:right;"><span style="color:' . $statusColor . ';font-weight:bold;">' . $statusLabel . '</span></td>'
-            . '</tr></table>'
+            . '</tr>'
+            . $extraPaymentRows
+            . '</table>'
             . '<div style="margin-top:30px;padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;font-size:11px;color:#92400e;">'
             . 'Este documento é um resumo informativo gerado pelo Veekar e não substitui nota fiscal ou recibo oficial.'
             . '</div>'

@@ -88,8 +88,14 @@ async function downloadClientSummary(historyId: number) {
 }
 
 const updatingPayment = ref<number | null>(null)
+const partialModalFor = ref<{ historyId: number; amount: number } | null>(null)
+const savingPartial = ref(false)
 
-async function changePaymentStatus(historyId: number, status: 'pendente' | 'parcial' | 'pago') {
+async function changePaymentStatus(historyId: number, status: 'pendente' | 'parcial' | 'pago', amount: number) {
+  if (status === 'parcial') {
+    partialModalFor.value = { historyId, amount }
+    return
+  }
   updatingPayment.value = historyId
   try {
     await historyStore.updatePaymentStatus(id, historyId, status)
@@ -98,9 +104,20 @@ async function changePaymentStatus(historyId: number, status: 'pendente' | 'parc
   }
 }
 
+async function confirmPartialPayment(value: number) {
+  if (!partialModalFor.value) return
+  savingPartial.value = true
+  try {
+    await historyStore.updatePaymentStatus(id, partialModalFor.value.historyId, 'parcial', value)
+    partialModalFor.value = null
+  } finally {
+    savingPartial.value = false
+  }
+}
+
 const paymentStatusLabels: Record<string, string> = { pendente: 'Pendente', parcial: 'Pago parcial', pago: 'Pago' }
 
-function formatCurrency(value: string | null) {
+function formatCurrency(value: string | null | undefined) {
   if (!value) return null
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value))
 }
@@ -212,6 +229,14 @@ function formatCurrency(value: string | null) {
         @cancel="showDeleteModal = false"
       />
 
+      <PartialPaymentModal
+        :open="!!partialModalFor"
+        :total-amount="partialModalFor?.amount ?? 0"
+        :loading="savingPartial"
+        @confirm="confirmPartialPayment"
+        @cancel="partialModalFor = null"
+      />
+
       <div class="bg-white rounded-xl shadow-sm border border-gray-100">
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
@@ -272,13 +297,16 @@ function formatCurrency(value: string | null) {
                       'bg-green-50 text-green-700': h.payment_status === 'pago',
                     }"
                     @click.stop
-                    @change="changePaymentStatus(h.id, ($event.target as HTMLSelectElement).value as 'pendente' | 'parcial' | 'pago')"
+                    @change="changePaymentStatus(h.id, ($event.target as HTMLSelectElement).value as 'pendente' | 'parcial' | 'pago', Number(h.amount))"
                   >
                     <option value="pendente">Pendente</option>
                     <option value="parcial">Pago parcial</option>
                     <option value="pago">Pago</option>
                   </select>
                 </div>
+                <p v-if="h.payment_status === 'parcial'" class="text-xs text-amber-600 mt-1">
+                  Pago: {{ formatCurrency(h.amount_paid) }} de {{ formatCurrency(h.amount) }}
+                </p>
                 <p class="text-sm text-gray-900 font-medium">{{ h.description }}</p>
                 <p v-if="h.notes" class="text-sm text-gray-500 mt-1">{{ h.notes }}</p>
 
