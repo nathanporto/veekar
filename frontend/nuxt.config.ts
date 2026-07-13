@@ -18,6 +18,28 @@ export default defineNuxtConfig({
     strict: true,
   },
 
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: https://www.facebook.com",
+          "font-src 'self' data:",
+          "connect-src 'self' https://veekar-production.up.railway.app https://www.facebook.com https://connect.facebook.net",
+          "frame-ancestors 'self'",
+          "base-uri 'self'",
+          "form-action 'self'",
+        ].join('; '),
+      },
+    },
+  },
+
   app: {
     head: {
       title: 'Veekar',
