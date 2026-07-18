@@ -21,6 +21,8 @@ return [
 
     'allowed_origins' => [
         'https://veekar.vercel.app',
+        'https://veekarsistema.com.br',
+        'https://www.veekarsistema.com.br',
         'http://localhost:3000',
     ],
 
