@@ -1,16 +1,27 @@
 <script setup lang="ts">
 import { useServiceHistoryStore } from '~/stores/serviceHistory'
 import { useVehiclesStore } from '~/stores/vehicles'
+import { useEmployeesStore } from '~/stores/employees'
 import type { Vehicle } from '~/types'
 
 const historyStore = useServiceHistoryStore()
 const vehiclesStore = useVehiclesStore()
+const employeesStore = useEmployeesStore()
 const router = useRouter()
 const route = useRoute()
 const vehicleId = Number(route.params.id)
 
 const vehicle = ref<Vehicle | null>(null)
+const employeeId = ref<number | null>(null)
 const today = new Date().toISOString().split('T')[0]
+
+const selectedEmployeeCommission = computed(() => {
+  const employee = employeesStore.employees.find(e => e.id === employeeId.value)
+  if (!employee || employee.commission_type === 'nenhuma') return null
+  return employee.commission_type === 'percentual'
+    ? `${Number(employee.commission_value)}% de comissão por atendimento`
+    : `${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(employee.commission_value))} de comissão fixa por atendimento`
+})
 
 interface Item {
   description: string
@@ -57,6 +68,7 @@ const error = ref('')
 onMounted(async () => {
   vehicle.value = await vehiclesStore.fetchOne(vehicleId)
   form.mileage = vehicle.value.mileage
+  employeesStore.fetchAll()
 })
 
 function addItem() {
@@ -84,6 +96,7 @@ async function submit() {
       description: form.description,
       mileage: Number(form.mileage),
       notes: form.notes || null,
+      employee_id: employeeId.value || null,
       estimated_delivery: form.estimated_delivery || null,
       return_date: useReturn.value && returnDate.value ? returnDate.value : null,
       return_reason: useReturn.value && returnReason.value ? returnReason.value : null,
@@ -230,6 +243,21 @@ async function submit() {
             class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p class="text-xs text-gray-400 mt-1">Quando o veículo estará pronto para retirada</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Funcionário responsável
+            <span class="text-gray-400 font-normal">(opcional)</span>
+          </label>
+          <select
+            v-model="employeeId"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option :value="null">Nenhum</option>
+            <option v-for="e in employeesStore.employees" :key="e.id" :value="e.id">{{ e.name }}</option>
+          </select>
+          <p v-if="selectedEmployeeCommission" class="text-xs text-green-600 mt-1">{{ selectedEmployeeCommission }}</p>
         </div>
 
         <div>

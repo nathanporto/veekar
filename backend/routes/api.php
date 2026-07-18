@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentReminderController;
 use App\Http\Controllers\ProductController;
@@ -33,6 +35,7 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/accept-terms', [AuthController::class, 'acceptTerms']);
     });
 });
 
@@ -44,7 +47,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel']);
 });
 
-Route::middleware(['auth:api', 'subscription'])->group(function () {
+Route::middleware(['auth:api', 'terms', 'subscription'])->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/recent-services', [DashboardController::class, 'recentServices']);
     Route::get('/dashboard/upcoming-returns', [DashboardController::class, 'upcomingReturns']);
@@ -54,6 +57,9 @@ Route::middleware(['auth:api', 'subscription'])->group(function () {
 
     Route::get('/payments', [PaymentController::class, 'index']);
     Route::apiResource('payment-reminders', PaymentReminderController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::apiResource('employees', EmployeeController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/commissions', [CommissionController::class, 'index']);
 
     Route::get('/reports/financial', [ReportController::class, 'financial']);
     Route::get('/reports/financial/pdf', [ReportController::class, 'exportPdf']);

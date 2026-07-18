@@ -7,13 +7,15 @@ const subscriptionStore = useSubscriptionStore()
 
 onMounted(async () => {
   if (auth.isAuthenticated) {
-    await subscriptionStore.fetchStatus()
+    await Promise.all([auth.fetchUser(), subscriptionStore.fetchStatus()])
   }
 })
 </script>
 
 <template>
   <div class="flex h-screen bg-gray-50 overflow-hidden">
+    <TermsReacceptanceModal />
+
     <AppSidebar />
 
     <div class="flex flex-col flex-1 min-w-0 overflow-hidden">

@@ -25,6 +25,12 @@ export function useApi() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Erro inesperado' }))
+
+      if (error.code === 'terms_reacceptance_required') {
+        const auth = useAuthStore()
+        if (auth.user) auth.user.terms_reacceptance_required = true
+      }
+
       // Se vier erros de validação por campo, usa a primeira mensagem de campo
       if (error.errors) {
         const firstField = Object.keys(error.errors)[0]

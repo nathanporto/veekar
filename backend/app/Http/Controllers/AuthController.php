@@ -31,6 +31,7 @@ class AuthController extends Controller
             'email'             => $validated['email'],
             'password'          => Hash::make($validated['password']),
             'accepted_terms_at' => now(),
+            'terms_version'     => config('terms.version'),
         ]);
 
         $user->subscription()->create(['status' => 'trial']);
@@ -58,7 +59,27 @@ class AuthController extends Controller
 
     public function me(): JsonResponse
     {
-        return response()->json(auth()->user());
+        $user = auth()->user();
+
+        return response()->json([
+            ...$user->toArray(),
+            'terms_reacceptance_required' => $user->terms_version !== config('terms.version'),
+        ]);
+    }
+
+    public function acceptTerms(): JsonResponse
+    {
+        $user = auth()->user();
+
+        $user->update([
+            'accepted_terms_at' => now(),
+            'terms_version'     => config('terms.version'),
+        ]);
+
+        return response()->json([
+            ...$user->toArray(),
+            'terms_reacceptance_required' => false,
+        ]);
     }
 
     public function logout(): JsonResponse

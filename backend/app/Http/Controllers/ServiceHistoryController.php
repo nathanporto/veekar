@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\ServiceHistory;
 use App\Models\Vehicle;
 use Illuminate\Http\JsonResponse;
@@ -9,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Mpdf\Mpdf;
 
 class ServiceHistoryController extends Controller
@@ -17,7 +19,7 @@ class ServiceHistoryController extends Controller
     {
         abort_if($vehicle->user_id !== auth()->id(), 403);
 
-        $histories = $vehicle->serviceHistories()->with('items')->get();
+        $histories = $vehicle->serviceHistories()->with(['items', 'employee'])->get();
 
         return response()->json($histories);
     }
@@ -31,6 +33,7 @@ class ServiceHistoryController extends Controller
             'description'                       => ['required', 'string'],
             'mileage'                           => ['required', 'integer', 'min:0'],
             'amount'                            => ['nullable', 'numeric', 'min:0'],
+            'employee_id'                       => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $vehicle->user_id)],
             'notes'                             => ['nullable', 'string'],
             'return_date'                       => ['nullable', 'date'],
             'return_reason'                     => ['nullable', 'string', 'max:255'],
@@ -61,6 +64,7 @@ class ServiceHistoryController extends Controller
                 'description'     => $validated['description'],
                 'mileage'         => $validated['mileage'],
                 'amount'          => $amount,
+                'employee_id'     => $validated['employee_id'] ?? null,
                 'notes'           => $validated['notes'] ?? null,
                 'return_date'      => $validated['return_date'] ?? null,
                 'return_reason'    => $validated['return_reason'] ?? null,
@@ -80,7 +84,7 @@ class ServiceHistoryController extends Controller
                 $vehicle->update(['mileage' => $validated['mileage']]);
             }
 
-            return $history->load('items');
+            return $history->load(['items', 'employee']);
         });
 
         return response()->json($history, 201);
@@ -95,6 +99,7 @@ class ServiceHistoryController extends Controller
             'service_date'                      => ['required', 'date'],
             'description'                       => ['required', 'string'],
             'mileage'                           => ['required', 'integer', 'min:0'],
+            'employee_id'                       => ['nullable', 'integer', Rule::exists('employees', 'id')->where('user_id', $vehicle->user_id)],
             'notes'                             => ['nullable', 'string'],
             'return_date'                       => ['nullable', 'date'],
             'return_reason'                     => ['nullable', 'string', 'max:255'],
@@ -110,7 +115,7 @@ class ServiceHistoryController extends Controller
             $vehicle->update(['mileage' => $validated['mileage']]);
         }
 
-        return response()->json($serviceHistory->load('items'));
+        return response()->json($serviceHistory->load(['items', 'employee']));
     }
 
     public function checklistPdf(Vehicle $vehicle, ServiceHistory $serviceHistory): Response
@@ -264,9 +269,22 @@ class ServiceHistoryController extends Controller
             'pendente' => 0,
         };
 
+        $commissionAmount = null;
+
+        if ($validated['payment_status'] === 'pago' && $serviceHistory->employee_id) {
+            $employee = $serviceHistory->employee ?? Employee::find($serviceHistory->employee_id);
+
+            if ($employee && $employee->commission_type !== 'nenhuma') {
+                $commissionAmount = $employee->commission_type === 'percentual'
+                    ? round((float) $serviceHistory->amount * (float) $employee->commission_value / 100, 2)
+                    : (float) $employee->commission_value;
+            }
+        }
+
         $serviceHistory->update([
-            'payment_status' => $validated['payment_status'],
-            'amount_paid'    => $amountPaid,
+            'payment_status'    => $validated['payment_status'],
+            'amount_paid'       => $amountPaid,
+            'commission_amount' => $commissionAmount,
         ]);
 
         return response()->json($serviceHistory);

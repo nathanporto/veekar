@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'terms'        => \App\Http\Middleware\CheckTermsAccepted::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

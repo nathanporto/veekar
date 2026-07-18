@@ -42,5 +42,9 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = await api.get<User>('/auth/me')
   }
 
-  return { user, token, isAuthenticated, login, register, logout, fetchUser }
+  async function acceptTerms() {
+    user.value = await api.post<User>('/auth/accept-terms', {})
+  }
+
+  return { user, token, isAuthenticated, login, register, logout, fetchUser, acceptTerms }
 })

@@ -23,7 +23,7 @@ definePageMeta({ layout: 'landing' })
     <main class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <div class="mb-10">
         <h1 class="text-3xl font-bold text-gray-900">Política de Privacidade</h1>
-        <p class="text-gray-500 text-sm mt-2">Última atualização: 1º de julho de 2026</p>
+        <p class="text-gray-500 text-sm mt-2">Última atualização: 15 de julho de 2026</p>
         <p class="text-gray-500 text-sm mt-1">Em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD)</p>
       </div>
 
@@ -116,6 +116,10 @@ definePageMeta({ layout: 'landing' })
               <p class="font-medium text-gray-800">Vercel</p>
               <p class="text-gray-500 text-xs mt-1">Hospedagem da interface web (frontend). Não processa dados pessoais diretamente.</p>
             </div>
+            <div class="border border-gray-200 rounded-xl p-4">
+              <p class="font-medium text-gray-800">Meta Platforms, Inc. (Facebook/Instagram)</p>
+              <p class="text-gray-500 text-xs mt-1">Utilizado para mensuração e otimização de campanhas publicitárias por meio do Meta Pixel, que coleta dados de navegação (como páginas visitadas e eventos de conversão) para fins de marketing. O tratamento desses dados pela Meta segue sua própria política de privacidade: <a href="https://www.facebook.com/privacy/policy/" target="_blank" class="text-blue-600 hover:underline">facebook.com/privacy/policy</a></p>
+            </div>
           </div>
         </section>
 
@@ -154,9 +158,16 @@ definePageMeta({ layout: 'landing' })
         <section>
           <h2 class="text-base font-semibold text-gray-900 mb-3">8. Cookies</h2>
           <p>
-            O Veekar utiliza apenas cookies estritamente necessários para funcionamento do sistema
-            (autenticação e preferências de sessão). Não utilizamos cookies de rastreamento ou
-            publicidade de terceiros.
+            O Veekar utiliza cookies estritamente necessários para o funcionamento do sistema (autenticação e
+            gerenciamento de sessão).
+          </p>
+          <p class="mt-2">
+            Também utilizamos o <strong>Meta Pixel</strong>, uma ferramenta de rastreamento de terceiros
+            fornecida pela Meta Platforms, Inc., para mensurar o desempenho de campanhas publicitárias e
+            otimizar a exibição de anúncios nas plataformas Facebook e Instagram. Essa ferramenta coleta dados
+            de navegação (como páginas visitadas e ações realizadas no site) e pode utilizar cookies de
+            terceiros para essa finalidade. Você pode gerenciar suas preferências de anúncios diretamente nas
+            configurações da sua conta Meta (Facebook/Instagram).
           </p>
         </section>
 

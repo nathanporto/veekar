@@ -4,6 +4,7 @@ export interface User {
   company_name: string | null
   document: string | null
   email: string
+  terms_reacceptance_required?: boolean
 }
 
 export interface Customer {
@@ -41,16 +42,29 @@ export interface ServiceItem {
   updated_at: string
 }
 
+export interface Employee {
+  id: number
+  user_id: number
+  name: string
+  commission_type: 'nenhuma' | 'percentual' | 'fixo'
+  commission_value: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface ServiceHistory {
   id: number
   vehicle_id: number
   vehicle?: Vehicle
+  employee_id?: number | null
+  employee?: Employee | null
   service_date: string
   description: string
   mileage: number
   amount: string | null
   payment_status?: 'pendente' | 'parcial' | 'pago'
   amount_paid?: string
+  commission_amount?: string | null
   notes: string | null
   items?: ServiceItem[]
   created_at: string

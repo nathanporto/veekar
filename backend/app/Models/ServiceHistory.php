@@ -10,6 +10,7 @@ class ServiceHistory extends Model
 {
     protected $fillable = [
         'vehicle_id',
+        'employee_id',
         'service_date',
         'description',
         'mileage',
@@ -26,6 +27,7 @@ class ServiceHistory extends Model
         'service_status',
         'payment_status',
         'amount_paid',
+        'commission_amount',
     ];
 
     protected function casts(): array
@@ -36,6 +38,7 @@ class ServiceHistory extends Model
             'estimated_delivery'  => 'date',
             'amount'          => 'decimal:2',
             'amount_paid'     => 'decimal:2',
+            'commission_amount' => 'decimal:2',
             'entry_checklist' => 'array',
         ];
     }
@@ -43,6 +46,11 @@ class ServiceHistory extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function items(): HasMany

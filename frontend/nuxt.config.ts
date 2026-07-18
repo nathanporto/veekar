@@ -1,4 +1,4 @@
-export default defineNuxtConfig({
+                 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
@@ -31,7 +31,7 @@ export default defineNuxtConfig({
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: https://www.facebook.com",
           "font-src 'self' data:",
-          "connect-src 'self' https://veekar-production.up.railway.app https://www.facebook.com https://connect.facebook.net",
+          `connect-src 'self' https://veekar-production.up.railway.app https://www.facebook.com https://connect.facebook.net${process.env.NODE_ENV !== 'production' ? ' http://localhost:8000' : ''}`,
           "frame-ancestors 'self'",
           "base-uri 'self'",
           "form-action 'self'",
