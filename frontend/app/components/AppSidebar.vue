@@ -9,18 +9,38 @@ const { isOpen, close } = useMobileMenu()
 
 watch(() => route.path, close)
 
-const navItems = [
-  { label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', to: '/dashboard' },
-  { label: 'Clientes', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', to: '/clientes' },
-  { label: 'Veículos', icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2.5-.001M13 16H9m4 0h3m3-10H6m0 0l2-3h7l2 3m0 0h-3m0 0v4', to: '/veiculos' },
-  { label: 'Relatórios', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', to: '/relatorios' },
-  { label: 'Estoque', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', to: '/estoque' },
-  { label: 'Pagamentos', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', to: '/pagamentos' },
-  { label: 'Funcionários', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', to: '/funcionarios' },
-  { label: 'Comissões', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 2v8m0 0v2m0-2c-1.11 0-2.08-.402-2.599-1', to: '/comissoes' },
-  { label: 'Orçamentos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', to: '/orcamentos' },
-  { label: 'Agenda', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', to: '/agenda' },
-  { label: 'Etapas', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', to: '/etapas' },
+const navGroups = [
+  {
+    label: null,
+    items: [
+      { label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', to: '/dashboard' },
+    ],
+  },
+  {
+    label: 'Atendimento',
+    items: [
+      { label: 'Clientes', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', to: '/clientes' },
+      { label: 'Veículos', icon: 'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2.5-.001M13 16H9m4 0h3m3-10H6m0 0l2-3h7l2 3m0 0h-3m0 0v4', to: '/veiculos' },
+      { label: 'Agenda', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', to: '/agenda' },
+      { label: 'Etapas', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', to: '/etapas' },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { label: 'Pagamentos', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', to: '/pagamentos' },
+      { label: 'Comissões', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 2v8m0 0v2m0-2c-1.11 0-2.08-.402-2.599-1', to: '/comissoes' },
+      { label: 'Orçamentos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', to: '/orcamentos' },
+      { label: 'Relatórios', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', to: '/relatorios' },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { label: 'Funcionários', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', to: '/funcionarios' },
+      { label: 'Estoque', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', to: '/estoque' },
+    ],
+  },
 ]
 
 function isActive(to: string) {
@@ -63,60 +83,68 @@ function isActive(to: string) {
       </button>
     </div>
 
-    <nav class="flex-1 p-4 space-y-1">
-      <NuxtLink
-        v-for="item in navItems"
-        :key="item.to"
-        :to="item.to"
-        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-        :class="isActive(item.to)
-          ? 'bg-blue-600 text-white'
-          : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
-      >
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
-        </svg>
-        {{ item.label }}
-      </NuxtLink>
+    <nav class="sidebar-nav flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+      <div v-for="group in navGroups" :key="group.label ?? 'root'" class="space-y-1">
+        <p v-if="group.label" class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+          {{ group.label }}
+        </p>
+        <NuxtLink
+          v-for="item in group.items"
+          :key="item.to"
+          :to="item.to"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          :class="isActive(item.to)
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
+          </svg>
+          {{ item.label }}
+        </NuxtLink>
+      </div>
 
-      <NuxtLink
-        to="/suporte"
-        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-        :class="isActive('/suporte')
-          ? 'bg-blue-600 text-white'
-          : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
-      >
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-        Suporte
-      </NuxtLink>
+      <div class="space-y-1">
+        <p class="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Conta</p>
+        <NuxtLink
+          to="/suporte"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          :class="isActive('/suporte')
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          Suporte
+        </NuxtLink>
 
-      <NuxtLink
-        to="/assinatura"
-        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-        :class="isActive('/assinatura')
-          ? 'bg-blue-600 text-white'
-          : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
-      >
-        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-        </svg>
-        <span class="flex-1">Plano</span>
-        <span
-          v-if="subscriptionStore.isTrial"
-          class="text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full"
-        >Trial</span>
-        <span
-          v-else-if="subscriptionStore.isExpired"
-          class="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full"
-        >Expirado</span>
-      </NuxtLink>
+        <NuxtLink
+          to="/assinatura"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          :class="isActive('/assinatura')
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+          <span class="flex-1">Plano</span>
+          <span
+            v-if="subscriptionStore.isTrial"
+            class="text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full"
+          >Trial</span>
+          <span
+            v-else-if="subscriptionStore.isExpired"
+            class="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full"
+          >Expirado</span>
+        </NuxtLink>
+      </div>
     </nav>
 
-    <div class="p-4 border-t border-slate-700">
+    <div class="flex-shrink-0 p-4 border-t border-slate-700">
       <div class="flex items-center gap-3 mb-3 px-3">
         <div class="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
           <span class="text-slate-300 text-xs font-medium">
@@ -141,3 +169,27 @@ function isActive(to: string) {
     </div>
   </aside>
 </template>
+
+<style scoped>
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb #0f172a;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: #2563eb;
+  border-radius: 9999px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background-color: #3b82f6;
+}
+</style>
