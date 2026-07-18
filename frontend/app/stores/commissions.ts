@@ -7,6 +7,7 @@ export interface CommissionServiceEntry {
   service_date: string
   amount: string
   commission_amount: string
+  paid_at: string
 }
 
 export interface EmployeeCommission {

@@ -28,6 +28,7 @@ class ServiceHistory extends Model
         'payment_status',
         'amount_paid',
         'commission_amount',
+        'paid_at',
     ];
 
     protected function casts(): array
@@ -39,6 +40,7 @@ class ServiceHistory extends Model
             'amount'          => 'decimal:2',
             'amount_paid'     => 'decimal:2',
             'commission_amount' => 'decimal:2',
+            'paid_at'         => 'datetime',
             'entry_checklist' => 'array',
         ];
     }

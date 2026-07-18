@@ -18,10 +18,10 @@ class CommissionController extends Controller
         $data = $employees->map(function (Employee $employee) use ($now) {
             $services = ServiceHistory::where('employee_id', $employee->id)
                 ->where('payment_status', 'pago')
-                ->whereMonth('service_date', $now->month)
-                ->whereYear('service_date', $now->year)
-                ->orderByDesc('service_date')
-                ->get(['id', 'vehicle_id', 'description', 'service_date', 'amount', 'commission_amount']);
+                ->whereMonth('paid_at', $now->month)
+                ->whereYear('paid_at', $now->year)
+                ->orderByDesc('paid_at')
+                ->get(['id', 'vehicle_id', 'description', 'service_date', 'amount', 'commission_amount', 'paid_at']);
 
             return [
                 'employee_id'      => $employee->id,

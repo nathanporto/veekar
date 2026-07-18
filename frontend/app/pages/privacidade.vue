@@ -117,6 +117,10 @@ definePageMeta({ layout: 'landing' })
               <p class="text-gray-500 text-xs mt-1">Hospedagem da interface web (frontend). Não processa dados pessoais diretamente.</p>
             </div>
             <div class="border border-gray-200 rounded-xl p-4">
+              <p class="font-medium text-gray-800">Resend</p>
+              <p class="text-gray-500 text-xs mt-1">Envio de e-mails transacionais (boas-vindas, confirmação de pagamento, redefinição de senha e verificação de e-mail). Compartilhamos seu nome e e-mail para esse fim. O Resend possui sua própria política de privacidade: <a href="https://resend.com/legal/privacy-policy" target="_blank" class="text-blue-600 hover:underline">resend.com/legal/privacy-policy</a></p>
+            </div>
+            <div class="border border-gray-200 rounded-xl p-4">
               <p class="font-medium text-gray-800">Meta Platforms, Inc. (Facebook/Instagram)</p>
               <p class="text-gray-500 text-xs mt-1">Utilizado para mensuração e otimização de campanhas publicitárias por meio do Meta Pixel, que coleta dados de navegação (como páginas visitadas e eventos de conversão) para fins de marketing. O tratamento desses dados pela Meta segue sua própria política de privacidade: <a href="https://www.facebook.com/privacy/policy/" target="_blank" class="text-blue-600 hover:underline">facebook.com/privacy/policy</a></p>
             </div>

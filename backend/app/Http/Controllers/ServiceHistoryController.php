@@ -115,7 +115,30 @@ class ServiceHistoryController extends Controller
             $vehicle->update(['mileage' => $validated['mileage']]);
         }
 
+        if ($serviceHistory->payment_status === 'pago') {
+            $serviceHistory->update([
+                'commission_amount' => $this->calculateCommission($serviceHistory, $serviceHistory->employee_id),
+            ]);
+        }
+
         return response()->json($serviceHistory->load(['items', 'employee']));
+    }
+
+    private function calculateCommission(ServiceHistory $serviceHistory, ?int $employeeId): ?float
+    {
+        if (! $employeeId) {
+            return null;
+        }
+
+        $employee = Employee::find($employeeId);
+
+        if (! $employee || $employee->commission_type === 'nenhuma') {
+            return null;
+        }
+
+        return $employee->commission_type === 'percentual'
+            ? round((float) $serviceHistory->amount * (float) $employee->commission_value / 100, 2)
+            : (float) $employee->commission_value;
     }
 
     public function checklistPdf(Vehicle $vehicle, ServiceHistory $serviceHistory): Response
@@ -269,22 +292,15 @@ class ServiceHistoryController extends Controller
             'pendente' => 0,
         };
 
-        $commissionAmount = null;
-
-        if ($validated['payment_status'] === 'pago' && $serviceHistory->employee_id) {
-            $employee = $serviceHistory->employee ?? Employee::find($serviceHistory->employee_id);
-
-            if ($employee && $employee->commission_type !== 'nenhuma') {
-                $commissionAmount = $employee->commission_type === 'percentual'
-                    ? round((float) $serviceHistory->amount * (float) $employee->commission_value / 100, 2)
-                    : (float) $employee->commission_value;
-            }
-        }
+        $commissionAmount = $validated['payment_status'] === 'pago'
+            ? $this->calculateCommission($serviceHistory, $serviceHistory->employee_id)
+            : null;
 
         $serviceHistory->update([
             'payment_status'    => $validated['payment_status'],
             'amount_paid'       => $amountPaid,
             'commission_amount' => $commissionAmount,
+            'paid_at'           => $validated['payment_status'] === 'pago' ? now() : null,
         ]);
 
         return response()->json($serviceHistory);

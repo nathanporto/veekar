@@ -65,6 +65,7 @@ export interface ServiceHistory {
   payment_status?: 'pendente' | 'parcial' | 'pago'
   amount_paid?: string
   commission_amount?: string | null
+  paid_at?: string | null
   notes: string | null
   items?: ServiceItem[]
   created_at: string
