@@ -1,4 +1,4 @@
-const publicRoutes = ['/', '/login', '/register', '/esqueci-senha', '/redefinir-senha', '/assinatura/sucesso', '/termos', '/privacidade']
+const publicRoutes = ['/', '/login', '/register', '/esqueci-senha', '/redefinir-senha', '/assinatura/sucesso', '/termos', '/privacidade', '/verificar-email', '/verificar-email/pendente']
 
 export default defineNuxtRouteMiddleware((to) => {
   const token = useCookie('veekar_token')

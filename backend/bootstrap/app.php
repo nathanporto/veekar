@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,6 +34,17 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*')) {
                 $errors = collect($e->errors())->flatten()->first();
                 return response()->json(['message' => $errors], 422);
+            }
+        });
+
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if ($request->is('api/*')) {
+                $message = match ($e->getStatusCode()) {
+                    429     => 'Muitas tentativas. Aguarde um pouco antes de tentar novamente.',
+                    default => $e->getMessage() ?: 'Erro na requisição.',
+                };
+
+                return response()->json(['message' => $message], $e->getStatusCode());
             }
         });
 

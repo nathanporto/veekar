@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(name: string, companyName: string, document: string, email: string, password: string, passwordConfirmation: string, acceptedTerms: boolean) {
-    const data = await api.post<{ token: string; user: User }>('/auth/register', {
+    await api.post<{ message: string }>('/auth/register', {
       name,
       company_name: companyName,
       document,
@@ -25,9 +25,11 @@ export const useAuthStore = defineStore('auth', () => {
       password_confirmation: passwordConfirmation,
       accepted_terms: acceptedTerms,
     })
-    token.value = data.token
-    user.value = data.user
-    await navigateTo('/dashboard')
+    await navigateTo(`/verificar-email/pendente?email=${encodeURIComponent(email)}`)
+  }
+
+  async function resendVerification(email: string) {
+    return api.post<{ message: string }>('/auth/resend-verification', { email })
   }
 
   async function logout() {
@@ -46,5 +48,5 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = await api.post<User>('/auth/accept-terms', {})
   }
 
-  return { user, token, isAuthenticated, login, register, logout, fetchUser, acceptTerms }
+  return { user, token, isAuthenticated, login, register, logout, fetchUser, acceptTerms, resendVerification }
 })

@@ -31,6 +31,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:5,60');
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:10,1');
+    Route::post('/verify-email', [AuthController::class, 'verifyEmail'])->middleware('throttle:10,1');
+    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])->middleware('throttle:5,60');
 
     Route::middleware('auth:api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
