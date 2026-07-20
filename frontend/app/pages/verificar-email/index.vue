@@ -34,6 +34,7 @@ onMounted(async () => {
 
     authCookie.value = data.token
     status.value = 'success'
+    window.fbq?.('trackCustom', 'EmailVerified')
 
     setTimeout(() => navigateTo('/dashboard'), 2000)
   } catch {
