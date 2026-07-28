@@ -3,6 +3,12 @@ import { useQuotesStore } from '~/stores/quotes'
 
 const store = useQuotesStore()
 const api = useApi()
+const route = useRoute()
+const router = useRouter()
+const quoteId = Number(route.params.id)
+
+const loadingData = ref(true)
+const notFound = ref(false)
 
 // ─── Busca de cliente ────────────────────────────────────────────
 const customerSearch = ref('')
@@ -55,13 +61,13 @@ function clearCustomer() {
 const vehicles = ref<{ id: number; plate: string; brand: string; model: string }[]>([])
 const loadingVehicles = ref(false)
 
-async function loadVehicles(customerId: number) {
-  form.vehicle_id = null
+async function loadVehicles(customerId: number, keepSelected?: number | null) {
   vehicles.value = []
   loadingVehicles.value = true
   try {
     const res = await api.get<{ data: typeof vehicles.value }>(`/vehicles?customer_id=${customerId}`)
     vehicles.value = (res as any).data ?? (res as any)
+    form.vehicle_id = keepSelected ?? null
   } finally {
     loadingVehicles.value = false
   }
@@ -74,6 +80,36 @@ const form = reactive({
   notes: '',
   expires_at: '',
   items: [{ description: '', quantity: 1, unit_price: 0 }],
+})
+
+onMounted(async () => {
+  try {
+    const quote = await api.get<any>(`/quotes/${quoteId}`)
+
+    if (quote.status !== 'pending') {
+      notFound.value = true
+      return
+    }
+
+    form.notes = quote.notes ?? ''
+    form.expires_at = quote.expires_at ? quote.expires_at.slice(0, 10) : ''
+    form.items = quote.items.map((i: any) => ({
+      description: i.description,
+      quantity: i.quantity,
+      unit_price: Number(i.unit_price),
+    }))
+
+    if (quote.customer) {
+      selectedCustomer.value = quote.customer
+      customerSearch.value = quote.customer.name
+      form.customer_id = quote.customer.id
+      await loadVehicles(quote.customer.id, quote.vehicle?.id ?? null)
+    }
+  } catch {
+    notFound.value = true
+  } finally {
+    loadingData.value = false
+  }
 })
 
 function addItem() {
@@ -94,7 +130,6 @@ function formatCurrency(value: number) {
 
 const submitting = ref(false)
 const error = ref('')
-const createdToken = ref('')
 
 async function submit() {
   if (form.items.some(i => !i.description.trim())) {
@@ -104,7 +139,7 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    const quote = await store.createQuote({
+    await store.updateQuote(quoteId, {
       customer_id: form.customer_id,
       vehicle_id: form.vehicle_id,
       notes: form.notes || undefined,
@@ -115,23 +150,12 @@ async function submit() {
         unit_price: i.unit_price,
       })),
     })
-    createdToken.value = quote.token
+    await router.push('/orcamentos')
   } catch (e: any) {
-    error.value = e.message ?? 'Erro ao criar orçamento.'
+    error.value = e.message ?? 'Erro ao salvar orçamento.'
   } finally {
     submitting.value = false
   }
-}
-
-const publicLink = computed(() =>
-  createdToken.value ? `${window.location.origin}/orcamento/${createdToken.value}` : '',
-)
-
-const copied = ref(false)
-async function copyLink() {
-  await navigator.clipboard.writeText(publicLink.value)
-  copied.value = true
-  setTimeout(() => (copied.value = false), 2000)
 }
 </script>
 
@@ -144,52 +168,21 @@ async function copyLink() {
         </svg>
       </NuxtLink>
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Novo Orçamento</h1>
-        <p class="text-gray-500 text-sm mt-0.5">Preencha os dados e gere o link para o cliente</p>
+        <h1 class="text-2xl font-bold text-gray-900">Editar Orçamento</h1>
+        <p class="text-gray-500 text-sm mt-0.5">Ajuste os itens e valores do orçamento</p>
       </div>
     </div>
 
-    <!-- Sucesso: link gerado -->
-    <div v-if="createdToken" class="bg-green-50 border border-green-200 rounded-xl p-6 space-y-4">
-      <div class="flex items-center gap-2 text-green-700">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <span class="font-semibold">Orçamento criado com sucesso!</span>
-      </div>
-      <p class="text-sm text-green-700">Copie o link abaixo e envie pelo WhatsApp para o cliente:</p>
-      <div class="flex items-center gap-2">
-        <input
-          :value="publicLink"
-          readonly
-          class="flex-1 text-sm bg-white border border-green-300 rounded-lg px-3 py-2 text-gray-700 select-all"
-        />
-        <button
-          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-          @click="copyLink"
-        >
-          {{ copied ? 'Copiado!' : 'Copiar link' }}
-        </button>
-      </div>
-      <div class="flex gap-3 flex-wrap">
-        <a
-          :href="`https://wa.me/?text=${encodeURIComponent('Olá! Segue o link do seu orçamento: ' + publicLink)}`"
-          target="_blank"
-          class="flex items-center gap-2 px-4 py-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.558 4.121 1.531 5.856L.066 23.934l6.235-1.636A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.908 0-3.687-.516-5.22-1.413l-.375-.22-3.87 1.016 1.034-3.77-.245-.39A9.969 9.969 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-          </svg>
-          Compartilhar no WhatsApp
-        </a>
-        <NuxtLink
-          to="/orcamentos"
-          class="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Ver todos os orçamentos
-        </NuxtLink>
-      </div>
+    <div v-if="loadingData" class="space-y-4">
+      <div v-for="i in 3" :key="i" class="bg-white rounded-xl p-6 shadow-sm animate-pulse h-32" />
+    </div>
+
+    <div v-else-if="notFound" class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+      <p class="text-amber-800 font-medium">Este orçamento não pode mais ser editado.</p>
+      <p class="text-amber-700 text-sm mt-1">O cliente já respondeu (aprovou ou recusou), ou o orçamento não foi encontrado.</p>
+      <NuxtLink to="/orcamentos" class="inline-block mt-4 text-blue-600 hover:underline text-sm">
+        Voltar para orçamentos
+      </NuxtLink>
     </div>
 
     <!-- Formulário -->
@@ -361,13 +354,21 @@ async function copyLink() {
         {{ error }}
       </div>
 
-      <button
-        type="submit"
-        :disabled="submitting"
-        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-60"
-      >
-        {{ submitting ? 'Gerando...' : 'Gerar link do orçamento' }}
-      </button>
+      <div class="flex gap-3">
+        <button
+          type="submit"
+          :disabled="submitting"
+          class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-60"
+        >
+          {{ submitting ? 'Salvando...' : 'Salvar alterações' }}
+        </button>
+        <NuxtLink
+          to="/orcamentos"
+          class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+        >
+          Cancelar
+        </NuxtLink>
+      </div>
     </form>
   </div>
 </template>

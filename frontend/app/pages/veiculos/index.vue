@@ -84,6 +84,7 @@ function useDebounceFn(fn: () => void, delay: number) {
             d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2.5-.001M13 16H9m4 0h3m3-10H6m0 0l2-3h7l2 3" />
         </svg>
         <p>Nenhum veículo encontrado.</p>
+        <p class="text-xs text-gray-400 mt-1">Cada veículo guarda o histórico completo de atendimentos, peças trocadas e pagamentos.</p>
         <NuxtLink to="/veiculos/novo" class="text-blue-600 hover:underline text-sm mt-1 inline-block">
           Cadastrar primeiro veículo
         </NuxtLink>

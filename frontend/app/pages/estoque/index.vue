@@ -187,6 +187,7 @@ async function doDelete() {
             d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
         <p>Nenhum produto cadastrado.</p>
+        <p class="text-xs text-gray-400 mt-1">Cadastre peças e produtos pra controlar entrada, saída e quanto tem disponível.</p>
         <button class="text-blue-600 hover:underline text-sm mt-1 inline-block" @click="showNewForm = true">
           Cadastrar primeiro produto
         </button>

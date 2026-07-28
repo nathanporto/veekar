@@ -59,6 +59,19 @@ export const useQuotesStore = defineStore('quotes', () => {
     return created
   }
 
+  async function updateQuote(id: number, payload: {
+    customer_id?: number | null
+    vehicle_id?: number | null
+    notes?: string
+    expires_at?: string
+    items: { description: string; quantity: number; unit_price: number }[]
+  }): Promise<Quote> {
+    const updated = await api.put<Quote>(`/quotes/${id}`, payload)
+    const idx = quotes.value.findIndex(q => q.id === id)
+    if (idx !== -1) quotes.value[idx] = updated
+    return updated
+  }
+
   async function removeQuote(id: number) {
     await api.delete(`/quotes/${id}`)
     quotes.value = quotes.value.filter(q => q.id !== id)

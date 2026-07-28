@@ -8,6 +8,7 @@ use App\Models\QuoteItem;
 use App\Models\Vehicle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class QuoteController extends Controller
@@ -71,6 +72,58 @@ class QuoteController extends Controller
         if ($quote->user_id !== auth()->id()) {
             return response()->json(['message' => 'Não autorizado.'], 403);
         }
+
+        return response()->json($this->formatQuote($quote->load(['items', 'customer', 'vehicle'])));
+    }
+
+    public function update(Request $request, Quote $quote): JsonResponse
+    {
+        if ($quote->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Não autorizado.'], 403);
+        }
+
+        if ($quote->status !== 'pending') {
+            return response()->json(['message' => 'Este orçamento já foi respondido pelo cliente e não pode mais ser editado.'], 409);
+        }
+
+        $data = $request->validate([
+            'customer_id'          => 'nullable|integer',
+            'vehicle_id'           => 'nullable|integer',
+            'notes'                => 'nullable|string|max:1000',
+            'expires_at'           => 'nullable|date',
+            'items'                => 'required|array|min:1',
+            'items.*.description'  => 'required|string|max:255',
+            'items.*.quantity'     => 'required|integer|min:1',
+            'items.*.unit_price'   => 'required|numeric|min:0',
+        ]);
+
+        if (! empty($data['customer_id'])) {
+            Customer::where('id', $data['customer_id'])->where('user_id', auth()->id())->firstOrFail();
+        }
+
+        if (! empty($data['vehicle_id'])) {
+            Vehicle::where('id', $data['vehicle_id'])->where('user_id', auth()->id())->firstOrFail();
+        }
+
+        DB::transaction(function () use ($quote, $data) {
+            $quote->update([
+                'customer_id' => $data['customer_id'] ?? null,
+                'vehicle_id'  => $data['vehicle_id'] ?? null,
+                'notes'       => $data['notes'] ?? null,
+                'expires_at'  => $data['expires_at'] ?? null,
+            ]);
+
+            $quote->items()->delete();
+
+            foreach ($data['items'] as $item) {
+                QuoteItem::create([
+                    'quote_id'    => $quote->id,
+                    'description' => $item['description'],
+                    'quantity'    => (int) $item['quantity'],
+                    'unit_price'  => (float) $item['unit_price'],
+                ]);
+            }
+        });
 
         return response()->json($this->formatQuote($quote->load(['items', 'customer', 'vehicle'])));
     }

@@ -97,6 +97,21 @@ class EmailService
         );
     }
 
+    public function sendOnboarding(string $email, string $name): void
+    {
+        $this->send(
+            to: $email,
+            subject: 'Seus 3 primeiros passos no Veekar',
+            html: $this->template('Bem-vindo(a), ' . $this->firstName($name) . '!', [
+                'Pra você ver o Veekar funcionando de verdade, só precisa de 3 passos rápidos:',
+                '<strong>1. Cadastre um cliente</strong> — nome e telefone já bastam.<br>'
+                    . '<strong>2. Cadastre um veículo</strong> — vincula ao cliente que você acabou de criar.<br>'
+                    . '<strong>3. Registre um atendimento</strong> — descrição do serviço e valor.',
+                'Pronto — a partir daí, o histórico do veículo, o controle de pagamento e tudo mais já ficam registrados automaticamente.',
+            ], 'Acessar o Veekar', config('services.stripe.frontend_url') . '/dashboard')
+        );
+    }
+
     private function send(string $to, string $subject, string $html): void
     {
         Mail::html($html, function ($message) use ($to, $subject) {

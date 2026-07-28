@@ -72,7 +72,7 @@ Route::middleware(['auth:api', 'terms', 'subscription'])->group(function () {
     Route::post('/products/{product}/entrada', [ProductController::class, 'registerEntrada']);
     Route::post('/products/{product}/saida', [ProductController::class, 'registerSaida']);
 
-    Route::apiResource('quotes', QuoteController::class)->only(['index', 'store', 'show', 'destroy']);
+    Route::apiResource('quotes', QuoteController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
 
     Route::apiResource('customers', CustomerController::class);
 
