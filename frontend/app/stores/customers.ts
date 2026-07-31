@@ -33,5 +33,22 @@ export const useCustomersStore = defineStore('customers', () => {
     customers.value = customers.value.filter(c => c.id !== id)
   }
 
-  return { customers, total, loading, fetchAll, fetchOne, create, update, remove }
+  async function importSheet(file: File): Promise<{ imported: number; errors: { line: number; message: string }[] }> {
+    const config = useRuntimeConfig()
+    const token = useCookie('veekar_token')
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await fetch(`${config.public.apiBase}/customers/import`, {
+      method: 'POST',
+      headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
+      body: formData,
+    })
+
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message ?? 'Erro ao importar planilha.')
+    return data
+  }
+
+  return { customers, total, loading, fetchAll, fetchOne, create, update, remove, importSheet }
 })

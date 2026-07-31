@@ -72,6 +72,61 @@ function formatCurrency(value: string | null) {
       <p class="text-gray-500 text-sm mt-1">Visão geral do sistema</p>
     </div>
 
+    <!-- Checklist de primeiros passos -->
+    <div
+      v-if="!loading && (stats.customers === 0 || stats.vehicles === 0 || stats.services === 0)"
+      class="bg-white rounded-xl shadow-sm border border-blue-100 p-5"
+    >
+      <h2 class="text-sm font-semibold text-gray-900 mb-3">Primeiros passos no Veekar</h2>
+      <div class="space-y-2">
+        <NuxtLink
+          to="/clientes/novo"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+          :class="stats.customers > 0 ? 'text-gray-400' : 'hover:bg-blue-50 text-gray-700'"
+        >
+          <span
+            class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0"
+            :class="stats.customers > 0 ? 'bg-blue-600 border-blue-600' : 'border-gray-300'"
+          >
+            <svg v-if="stats.customers > 0" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <span class="text-sm font-medium" :class="stats.customers > 0 ? 'line-through' : ''">Cadastre seu primeiro cliente</span>
+        </NuxtLink>
+        <NuxtLink
+          to="/veiculos/novo"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+          :class="stats.vehicles > 0 ? 'text-gray-400' : 'hover:bg-blue-50 text-gray-700'"
+        >
+          <span
+            class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0"
+            :class="stats.vehicles > 0 ? 'bg-blue-600 border-blue-600' : 'border-gray-300'"
+          >
+            <svg v-if="stats.vehicles > 0" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <span class="text-sm font-medium" :class="stats.vehicles > 0 ? 'line-through' : ''">Cadastre seu primeiro veículo</span>
+        </NuxtLink>
+        <NuxtLink
+          to="/veiculos"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+          :class="stats.services > 0 ? 'text-gray-400' : 'hover:bg-blue-50 text-gray-700'"
+        >
+          <span
+            class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0"
+            :class="stats.services > 0 ? 'bg-blue-600 border-blue-600' : 'border-gray-300'"
+          >
+            <svg v-if="stats.services > 0" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <span class="text-sm font-medium" :class="stats.services > 0 ? 'line-through' : ''">Registre seu primeiro atendimento</span>
+        </NuxtLink>
+      </div>
+    </div>
+
     <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div v-for="i in 3" :key="i" class="bg-white rounded-xl p-6 shadow-sm animate-pulse">
         <div class="h-4 bg-gray-200 rounded w-24 mb-3" />

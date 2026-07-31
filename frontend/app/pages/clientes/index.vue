@@ -35,6 +35,41 @@ function useDebounceFn(fn: () => void, delay: number) {
     timer = setTimeout(fn, delay)
   }
 }
+
+// Importar planilha
+const showImport = ref(false)
+const importFile = ref<File | null>(null)
+const importing = ref(false)
+const importError = ref('')
+const importResult = ref<{ imported: number; errors: { line: number; message: string }[] } | null>(null)
+
+function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  importFile.value = target.files?.[0] ?? null
+  importResult.value = null
+  importError.value = ''
+}
+
+async function submitImport() {
+  if (!importFile.value) return
+  importing.value = true
+  importError.value = ''
+  try {
+    importResult.value = await store.importSheet(importFile.value)
+    if (importResult.value.imported > 0) await store.fetchAll(search.value)
+  } catch (e) {
+    importError.value = e instanceof Error ? e.message : 'Erro ao importar planilha.'
+  } finally {
+    importing.value = false
+  }
+}
+
+function closeImport() {
+  showImport.value = false
+  importFile.value = null
+  importResult.value = null
+  importError.value = ''
+}
 </script>
 
 <template>
@@ -53,15 +88,82 @@ function useDebounceFn(fn: () => void, delay: number) {
         <h1 class="text-2xl font-bold text-gray-900">Clientes</h1>
         <p class="text-gray-500 text-sm mt-1">{{ store.total }} cliente(s) cadastrado(s)</p>
       </div>
-      <NuxtLink
-        to="/clientes/novo"
-        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+      <div class="flex items-center gap-2">
+        <button
+          class="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+          @click="showImport = !showImport"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4 4m4-4v12" />
+          </svg>
+          Importar planilha
+        </button>
+        <NuxtLink
+          to="/clientes/novo"
+          class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Novo Cliente
+        </NuxtLink>
+      </div>
+    </div>
+
+    <!-- Importar planilha -->
+    <div v-if="showImport" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-900">Importar clientes de uma planilha</h2>
+          <p class="text-xs text-gray-500 mt-1">
+            Baixe o modelo, preencha e envie o arquivo. Colunas: Nome, Telefone, CPF (opcional), E-mail (opcional).
+          </p>
+        </div>
+        <button class="text-gray-400 hover:text-gray-600" @click="closeImport">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <a
+        href="/templates/clientes-modelo.xlsx"
+        download
+        class="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-medium"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        Novo Cliente
-      </NuxtLink>
+        Baixar planilha modelo
+      </a>
+
+      <div class="flex items-center gap-3">
+        <input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          class="text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 file:text-sm file:font-medium hover:file:bg-gray-200"
+          @change="onFileChange"
+        />
+        <button
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
+          :disabled="!importFile || importing"
+          @click="submitImport"
+        >
+          {{ importing ? 'Importando...' : 'Enviar planilha' }}
+        </button>
+      </div>
+
+      <div v-if="importError" class="bg-red-50 text-red-600 text-sm px-4 py-2.5 rounded-lg">{{ importError }}</div>
+
+      <div v-if="importResult" class="space-y-2">
+        <p class="text-sm font-medium text-green-700 bg-green-50 px-4 py-2.5 rounded-lg">
+          {{ importResult.imported }} cliente(s) importado(s) com sucesso.
+        </p>
+        <div v-if="importResult.errors.length > 0" class="bg-amber-50 text-amber-800 text-xs px-4 py-3 rounded-lg space-y-1">
+          <p class="font-medium">{{ importResult.errors.length }} linha(s) com problema:</p>
+          <p v-for="err in importResult.errors" :key="err.line">Linha {{ err.line }}: {{ err.message }}</p>
+        </div>
+      </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">

@@ -74,6 +74,7 @@ Route::middleware(['auth:api', 'terms', 'subscription'])->group(function () {
 
     Route::apiResource('quotes', QuoteController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
 
+    Route::post('/customers/import', [CustomerController::class, 'import']);
     Route::apiResource('customers', CustomerController::class);
 
     Route::get('/vehicles/search', [VehicleController::class, 'search']);

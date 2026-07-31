@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CustomerController extends Controller
 {
@@ -77,6 +79,70 @@ class CustomerController extends Controller
         $customer->update($validated);
 
         return response()->json($customer);
+    }
+
+    public function import(Request $request): JsonResponse
+    {
+        $userId = auth()->id();
+        $subscription = $request->attributes->get('subscription');
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+        ]);
+
+        $spreadsheet = IOFactory::load($request->file('file')->getRealPath());
+        $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+
+        // Remove o cabeçalho
+        array_shift($rows);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $lineNumber = $index + 2; // +1 pelo header removido, +1 porque planilha começa em 1
+
+            $name  = trim((string) ($row[0] ?? ''));
+            $phone = trim((string) ($row[1] ?? ''));
+            $cpf   = trim((string) ($row[2] ?? '')) ?: null;
+            $email = trim((string) ($row[3] ?? '')) ?: null;
+
+            if ($name === '' && $phone === '') {
+                continue; // linha vazia
+            }
+
+            if ($subscription?->isTrial() && Customer::where('user_id', $userId)->count() >= 3) {
+                $errors[] = ['line' => $lineNumber, 'message' => 'Limite do período gratuito atingido (3 clientes).'];
+                break;
+            }
+
+            $validator = Validator::make(
+                ['name' => $name, 'phone' => $phone, 'cpf' => $cpf, 'email' => $email],
+                [
+                    'name'  => ['required', 'string', 'max:255'],
+                    'phone' => ['required', 'string', 'max:20'],
+                    'cpf'   => ['nullable', 'string', 'max:14', Rule::unique('customers', 'cpf')->where('user_id', $userId)],
+                    'email' => ['nullable', 'email', 'max:255'],
+                ],
+            );
+
+            if ($validator->fails()) {
+                $errors[] = ['line' => $lineNumber, 'message' => $validator->errors()->first()];
+                continue;
+            }
+
+            Customer::create([
+                'user_id' => $userId,
+                'name'    => $name,
+                'phone'   => $phone,
+                'cpf'     => $cpf,
+                'email'   => $email,
+            ]);
+
+            $imported++;
+        }
+
+        return response()->json(['imported' => $imported, 'errors' => $errors]);
     }
 
     public function destroy(Customer $customer): JsonResponse
