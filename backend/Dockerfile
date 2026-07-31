@@ -7,6 +7,7 @@ RUN apk add --no-cache \
     freetype-dev \
     oniguruma-dev \
     libxml2-dev \
+    libzip-dev \
     zip \
     unzip \
     curl \
@@ -21,7 +22,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     pcntl \
     bcmath \
     xml \
-    gd
+    gd \
+    zip
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
