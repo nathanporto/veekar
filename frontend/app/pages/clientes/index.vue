@@ -116,7 +116,7 @@ function closeImport() {
         <div>
           <h2 class="text-sm font-semibold text-gray-900">Importar clientes de uma planilha</h2>
           <p class="text-xs text-gray-500 mt-1">
-            Baixe o modelo, preencha e envie o arquivo. Colunas: Nome, Telefone, CPF (opcional), E-mail (opcional).
+            Baixe o modelo ou envie sua própria planilha — reconhecemos colunas como Nome, Telefone/Celular, CPF e E-mail em qualquer ordem, e ignoramos as demais.
           </p>
         </div>
         <button class="text-gray-400 hover:text-gray-600" @click="closeImport">

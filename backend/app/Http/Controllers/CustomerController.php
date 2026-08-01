@@ -93,8 +93,14 @@ class CustomerController extends Controller
         $spreadsheet = IOFactory::load($request->file('file')->getRealPath());
         $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
 
-        // Remove o cabeçalho
-        array_shift($rows);
+        $header = array_shift($rows) ?? [];
+        $columns = $this->mapImportColumns($header);
+
+        if (! $columns['name'] || ! $columns['phone']) {
+            return response()->json([
+                'message' => 'Não encontramos as colunas de Nome e Telefone na planilha. Verifique o cabeçalho.',
+            ], 422);
+        }
 
         $imported = 0;
         $errors = [];
@@ -102,10 +108,10 @@ class CustomerController extends Controller
         foreach ($rows as $index => $row) {
             $lineNumber = $index + 2; // +1 pelo header removido, +1 porque planilha começa em 1
 
-            $name  = trim((string) ($row[0] ?? ''));
-            $phone = trim((string) ($row[1] ?? ''));
-            $cpf   = trim((string) ($row[2] ?? '')) ?: null;
-            $email = trim((string) ($row[3] ?? '')) ?: null;
+            $name  = trim((string) ($row[$columns['name']] ?? ''));
+            $phone = trim((string) ($row[$columns['phone']] ?? ''));
+            $cpf   = $columns['cpf'] !== null ? (trim((string) ($row[$columns['cpf']] ?? '')) ?: null) : null;
+            $email = $columns['email'] !== null ? (trim((string) ($row[$columns['email']] ?? '')) ?: null) : null;
 
             if ($name === '' && $phone === '') {
                 continue; // linha vazia
@@ -123,6 +129,16 @@ class CustomerController extends Controller
                     'phone' => ['required', 'string', 'max:20'],
                     'cpf'   => ['nullable', 'string', 'max:14', Rule::unique('customers', 'cpf')->where('user_id', $userId)],
                     'email' => ['nullable', 'email', 'max:255'],
+                ],
+                [
+                    'name.required'  => 'Nome é obrigatório.',
+                    'phone.required' => 'Telefone é obrigatório.',
+                    'name.max'       => 'Nome muito longo.',
+                    'phone.max'      => 'Telefone muito longo.',
+                    'cpf.max'        => 'CPF inválido.',
+                    'cpf.unique'     => 'Já existe um cliente com esse CPF.',
+                    'email.email'    => 'E-mail inválido.',
+                    'email.max'      => 'E-mail muito longo.',
                 ],
             );
 
@@ -143,6 +159,36 @@ class CustomerController extends Controller
         }
 
         return response()->json(['imported' => $imported, 'errors' => $errors]);
+    }
+
+    /**
+     * Identifica em quais colunas da planilha estão nome, telefone, cpf e e-mail,
+     * reconhecendo variações comuns de nome de coluna e ignorando o resto.
+     *
+     * @return array{name: ?int, phone: ?int, cpf: ?int, email: ?int}
+     */
+    private function mapImportColumns(array $header): array
+    {
+        $synonyms = [
+            'name'  => ['nome', 'cliente', 'nome do cliente', 'name'],
+            'phone' => ['telefone', 'celular', 'whatsapp', 'fone', 'contato', 'phone'],
+            'cpf'   => ['cpf', 'documento', 'cpf/cnpj'],
+            'email' => ['email', 'e-mail', 'e mail'],
+        ];
+
+        $columns = ['name' => null, 'phone' => null, 'cpf' => null, 'email' => null];
+
+        foreach ($header as $index => $rawLabel) {
+            $label = \Illuminate\Support\Str::of((string) $rawLabel)->ascii()->lower()->trim()->toString();
+
+            foreach ($synonyms as $field => $options) {
+                if ($columns[$field] === null && in_array($label, $options, true)) {
+                    $columns[$field] = $index;
+                }
+            }
+        }
+
+        return $columns;
     }
 
     public function destroy(Customer $customer): JsonResponse
