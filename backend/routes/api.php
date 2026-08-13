@@ -9,6 +9,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentReminderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceHistoryController;
@@ -22,6 +23,8 @@ Route::get('/health', fn () => response()->json(['status' => 'ok', 'app' => 'Vee
 Route::get('/public/quotes/{token}', [QuoteController::class, 'publicShow']);
 Route::post('/public/quotes/{token}/respond', [QuoteController::class, 'respond'])->middleware('throttle:10,1');
 Route::get('/public/service/{token}', [ServiceHistoryController::class, 'publicShow'])->middleware('throttle:30,1');
+Route::post('/quiz/leads', [QuizController::class, 'store'])->middleware('throttle:20,60');
+Route::post('/quiz/checkout', [QuizController::class, 'checkout'])->middleware('throttle:10,60');
 
 // Stripe webhook — público, sem auth
 Route::post('/webhook/stripe', [SubscriptionController::class, 'webhook']);

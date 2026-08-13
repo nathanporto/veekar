@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\QuizLead;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -10,6 +11,9 @@ use App\Services\EmailService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Stripe\Checkout\Session as CheckoutSession;
 use Stripe\Customer as StripeCustomer;
 use Stripe\PromotionCode;
@@ -181,7 +185,14 @@ class SubscriptionController extends Controller
     private function onCheckoutCompleted(object $session): void
     {
         $subscription = Subscription::where('stripe_customer_id', $session->customer)->first();
-        if (! $subscription) return;
+
+        if (! $subscription) {
+            $quizLeadId = $session->metadata->quiz_lead_id ?? null;
+            if ($quizLeadId) {
+                $this->createUserFromQuizCheckout($quizLeadId, $session);
+            }
+            return;
+        }
 
         $stripeSubscription = StripeSubscription::retrieve($session->subscription);
 
@@ -203,6 +214,53 @@ class SubscriptionController extends Controller
         }
 
         $subscription->update($updateData);
+    }
+
+    private function createUserFromQuizCheckout(string $quizLeadId, object $session): void
+    {
+        $lead = QuizLead::find($quizLeadId);
+        if (! $lead) return;
+
+        $existing = User::where('email', $lead->email)->first();
+        if ($existing) return; // já tem conta, evita duplicar
+
+        $stripeSubscription = StripeSubscription::retrieve($session->subscription);
+
+        $user = User::create([
+            'name'              => $lead->name,
+            'email'             => $lead->email,
+            'password'          => Hash::make(Str::random(40)),
+            'email_verified_at' => now(),
+            'accepted_terms_at' => $lead->accepted_terms_at ?? now(),
+            'terms_version'     => config('terms.version'),
+        ]);
+
+        $user->subscription()->create([
+            'stripe_customer_id'     => $session->customer,
+            'stripe_subscription_id' => $session->subscription,
+            'status'                 => 'active',
+            'current_period_end'     => $stripeSubscription->current_period_end
+                ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
+                : null,
+            'discount_code'          => 'quiz-20off-3m',
+        ]);
+
+        $lead->update(['user_id' => $user->id]);
+
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->upsert(
+            [
+                'email'      => $user->email,
+                'token'      => hash('sha256', $token),
+                'created_at' => now(),
+            ],
+            uniqueBy: ['email'],
+            update: ['token', 'created_at'],
+        );
+
+        rescue(fn () => $this->email->sendWelcome($user->email, $user->name));
+        rescue(fn () => $this->email->sendSetPassword($user->email, $user->name, $token));
     }
 
     private function extractDiscountCode(object $session): ?string

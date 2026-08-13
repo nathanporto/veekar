@@ -82,6 +82,21 @@ class EmailService
         );
     }
 
+    public function sendSetPassword(string $email, string $name, string $token): void
+    {
+        $setUrl = config('services.stripe.frontend_url') . '/redefinir-senha?token=' . $token . '&email=' . urlencode($email);
+
+        $this->send(
+            to: $email,
+            subject: 'Pagamento confirmado — defina sua senha no Veekar',
+            html: $this->template('Pagamento confirmado!', [
+                'Olá, ' . $this->firstName($name) . '! Seu pagamento foi aprovado e sua assinatura do Veekar já está ativa.',
+                'Falta só um passo: clique no botão abaixo para definir sua senha e acessar sua conta.',
+                'O link expira em <strong>60 minutos</strong>.',
+            ], 'Definir minha senha', $setUrl)
+        );
+    }
+
     public function sendEmailVerification(string $email, string $name, string $token): void
     {
         $verifyUrl = config('services.stripe.frontend_url') . '/verificar-email?token=' . $token . '&email=' . urlencode($email);

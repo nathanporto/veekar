@@ -42,6 +42,7 @@ return [
         'secret'          => env('STRIPE_SECRET'),
         'price_id'        => env('STRIPE_PRICE_ID'),
         'webhook_secret'  => env('STRIPE_WEBHOOK_SECRET'),
+        'quiz_coupon_id'  => env('STRIPE_QUIZ_COUPON_ID'),
         'frontend_url'    => env('FRONTEND_URL', 'http://localhost:3000'),
     ],
 
