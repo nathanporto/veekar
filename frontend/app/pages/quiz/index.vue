@@ -111,6 +111,30 @@ const submittingContact = ref(false)
 const contactError = ref('')
 const leadId = ref<number | null>(null)
 
+// Formata o telefone com DDD enquanto a pessoa digita: (11) 91234-5678
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length === 0) return ''
+  if (digits.length <= 2) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
+const phoneDisplay = computed({
+  get: () => contact.phone,
+  set: (value: string) => { contact.phone = formatPhone(value) },
+})
+
+// Quem voltou do checkout (ou da oferta do Kit) já tem um lead criado — pula
+// direto pra tela de oferta em vez de reiniciar o quiz do zero.
+const route = useRoute()
+const resumeLeadId = route.query.resume_lead_id
+if (resumeLeadId) {
+  leadId.value = Number(resumeLeadId)
+  stage.value = 'offer'
+}
+
 async function submitContact() {
   if (!acceptedTerms.value) {
     contactError.value = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade'
@@ -159,7 +183,7 @@ async function subscribeWithDiscount() {
 }
 
 function startTrial() {
-  navigateTo('/register')
+  navigateTo('/quiz/oferta-kit?ref=trial')
 }
 </script>
 
@@ -273,9 +297,11 @@ function startTrial() {
             class="w-full px-4 py-3 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
           <input
-            v-model="contact.phone"
+            v-model="phoneDisplay"
             type="tel"
+            inputmode="numeric"
             required
+            maxlength="16"
             placeholder="WhatsApp (com DDD)"
             class="w-full px-4 py-3 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />

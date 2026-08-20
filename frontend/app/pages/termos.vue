@@ -23,7 +23,7 @@ definePageMeta({ layout: 'landing' })
     <main class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <div class="mb-10">
         <h1 class="text-3xl font-bold text-gray-900">Termos de Uso</h1>
-        <p class="text-gray-500 text-sm mt-2">Última atualização: 15 de julho de 2026</p>
+        <p class="text-gray-500 text-sm mt-2">Última atualização: 20 de agosto de 2026</p>
       </div>
 
       <div class="prose prose-gray max-w-none space-y-8 text-gray-700 text-sm leading-relaxed">
@@ -121,6 +121,13 @@ definePageMeta({ layout: 'landing' })
             atualmente a <strong>Stripe, Inc.</strong>, responsável integral pelo processamento das transações
             financeiras. A plataforma não coleta, processa, armazena ou possui acesso aos dados completos de
             cartões de crédito ou de outros meios de pagamento utilizados pelo usuário.
+          </p>
+          <p class="mt-2">
+            Já os pagamentos de produtos digitais avulsos oferecidos pela plataforma (como o Kit Oficina
+            Organizada) são processados pela <strong>Cakto</strong>, intermediador de pagamento independente
+            responsável integral pelo processamento dessas transações. Da mesma forma, a plataforma não
+            coleta, processa, armazena ou possui acesso aos dados completos de cartões de crédito ou de
+            outros meios de pagamento utilizados nessas compras.
           </p>
           <p class="mt-2">
             As assinaturas possuem cobrança recorrente, realizada conforme a periodicidade e o plano escolhido

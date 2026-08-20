@@ -62,7 +62,7 @@ class QuizController extends Controller
             'mode'        => 'subscription',
             'metadata'    => ['quiz_lead_id' => (string) $lead->id],
             'success_url' => config('services.stripe.frontend_url') . '/quiz/sucesso',
-            'cancel_url'  => config('services.stripe.frontend_url') . '/quiz',
+            'cancel_url'  => config('services.stripe.frontend_url') . '/quiz/oferta-kit?ref=checkout&lead_id=' . $lead->id,
         ]);
 
         return response()->json(['url' => $session->url]);

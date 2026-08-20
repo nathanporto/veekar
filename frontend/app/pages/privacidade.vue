@@ -23,7 +23,7 @@ definePageMeta({ layout: 'landing' })
     <main class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <div class="mb-10">
         <h1 class="text-3xl font-bold text-gray-900">Política de Privacidade</h1>
-        <p class="text-gray-500 text-sm mt-2">Última atualização: 15 de julho de 2026</p>
+        <p class="text-gray-500 text-sm mt-2">Última atualização: 20 de agosto de 2026</p>
         <p class="text-gray-500 text-sm mt-1">Em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD)</p>
       </div>
 
@@ -106,7 +106,11 @@ definePageMeta({ layout: 'landing' })
           <div class="mt-3 space-y-3">
             <div class="border border-gray-200 rounded-xl p-4">
               <p class="font-medium text-gray-800">Stripe, Inc.</p>
-              <p class="text-gray-500 text-xs mt-1">Processamento de pagamentos. Compartilhamos nome, e-mail e dados de faturamento. A Stripe possui sua própria política de privacidade: <a href="https://stripe.com/br/privacy" target="_blank" class="text-blue-600 hover:underline">stripe.com/br/privacy</a></p>
+              <p class="text-gray-500 text-xs mt-1">Processamento de pagamentos das assinaturas do Veekar. Compartilhamos nome, e-mail e dados de faturamento. A Stripe possui sua própria política de privacidade: <a href="https://stripe.com/br/privacy" target="_blank" class="text-blue-600 hover:underline">stripe.com/br/privacy</a></p>
+            </div>
+            <div class="border border-gray-200 rounded-xl p-4">
+              <p class="font-medium text-gray-800">Cakto</p>
+              <p class="text-gray-500 text-xs mt-1">Processamento de pagamentos de produtos digitais avulsos (como o Kit Oficina Organizada). Compartilhamos nome, e-mail e dados de faturamento necessários para a compra. A Cakto possui sua própria política de privacidade: <a href="https://www.cakto.com.br/politica-de-privacidade" target="_blank" class="text-blue-600 hover:underline">cakto.com.br/politica-de-privacidade</a></p>
             </div>
             <div class="border border-gray-200 rounded-xl p-4">
               <p class="font-medium text-gray-800">Railway</p>
