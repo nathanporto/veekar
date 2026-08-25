@@ -67,7 +67,15 @@ const painMessages: Record<string, string> = {
   desorganizacao: 'colocar ordem na desorganização do dia a dia',
 }
 
-const stage = ref<'quiz' | 'contact' | 'offer'>('quiz')
+// Reforça a personalização na oferta cruzando com o volume de carros/mês
+const volumeMessages: Record<string, string> = {
+  'até 10': 'Mesmo atendendo poucos carros por mês, controlar tudo na cabeça ou no papel logo vira bagunça — e cliente esquecido é cliente perdido.',
+  '11 a 30': 'Com esse volume de carros por mês, cada histórico perdido ou cliente esquecido é dinheiro deixado na mesa.',
+  '31 a 60': 'Nesse volume, é quase impossível manter tudo organizado sem ajuda — cada ligação perdida pode ser um cliente que não volta.',
+  'mais de 60': 'Com esse volume de carros por mês, sua oficina já opera no limite do que dá pra controlar manualmente.',
+}
+
+const stage = ref<'quiz' | 'contact' | 'loading' | 'offer'>('quiz')
 const currentStep = ref(0)
 const progress = computed(() => Math.round(((currentStep.value) / steps.length) * 100))
 const direction = ref<'forward' | 'back'>('forward')
@@ -135,6 +143,28 @@ if (resumeLeadId) {
   stage.value = 'offer'
 }
 
+// Tela de "analisando respostas" — só um efeito de personalização, com
+// mensagens que trocam sozinhas antes de cair na oferta.
+const loadingMessages = [
+  'Analisando suas respostas...',
+  'Calculando o diagnóstico da sua oficina...',
+  'Preparando sua condição personalizada...',
+]
+const loadingMessageIndex = ref(0)
+let loadingInterval: ReturnType<typeof setInterval> | null = null
+
+function runLoadingStage() {
+  stage.value = 'loading'
+  loadingMessageIndex.value = 0
+  loadingInterval = setInterval(() => {
+    if (loadingMessageIndex.value < loadingMessages.length - 1) loadingMessageIndex.value++
+  }, 800)
+  setTimeout(() => {
+    if (loadingInterval) clearInterval(loadingInterval)
+    stage.value = 'offer'
+  }, 2400)
+}
+
 async function submitContact() {
   if (!acceptedTerms.value) {
     contactError.value = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade'
@@ -157,13 +187,52 @@ async function submitContact() {
       accepted_terms: acceptedTerms.value,
     })
     leadId.value = lead.id
-    stage.value = 'offer'
+    runLoadingStage()
   } catch (e) {
     contactError.value = e instanceof Error ? e.message : 'Erro ao enviar. Tente novamente.'
   } finally {
     submittingContact.value = false
   }
 }
+
+// Contador de urgência: real (não reinicia sozinho), guardado por lead no
+// localStorage. Ao zerar, a oferta continua valendo (o desconto do quiz é
+// fixo) — só troca a moldura de urgência por uma mais neutra.
+const OFFER_WINDOW_MS = 20 * 60 * 1000
+const offerSecondsLeft = ref<number | null>(null)
+let offerCountdownInterval: ReturnType<typeof setInterval> | null = null
+
+function startOfferCountdown() {
+  if (!leadId.value || typeof window === 'undefined') return
+  const storageKey = `quiz_offer_deadline_${leadId.value}`
+  let deadline = Number(window.localStorage.getItem(storageKey))
+  if (!deadline) {
+    deadline = Date.now() + OFFER_WINDOW_MS
+    window.localStorage.setItem(storageKey, String(deadline))
+  }
+
+  const tick = () => {
+    offerSecondsLeft.value = Math.max(0, Math.round((deadline - Date.now()) / 1000))
+    if (offerSecondsLeft.value <= 0 && offerCountdownInterval) {
+      clearInterval(offerCountdownInterval)
+    }
+  }
+  tick()
+  offerCountdownInterval = setInterval(tick, 1000)
+}
+
+const offerExpired = computed(() => offerSecondsLeft.value !== null && offerSecondsLeft.value <= 0)
+const offerCountdownLabel = computed(() => {
+  if (offerSecondsLeft.value === null) return ''
+  const m = Math.floor(offerSecondsLeft.value / 60)
+  const s = offerSecondsLeft.value % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+})
+
+watch(stage, (value) => {
+  if (value === 'offer') startOfferCountdown()
+})
+if (stage.value === 'offer') startOfferCountdown()
 
 // Oferta
 const checkingOut = ref(false)
@@ -334,6 +403,16 @@ function startTrial() {
         </form>
       </div>
 
+      <!-- Analisando respostas -->
+      <div v-else-if="stage === 'loading'" class="py-6 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-2xl mb-5 animate-pulse-soft">
+          <svg class="w-8 h-8 text-blue-600 animate-spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+        <p class="text-sm font-medium text-gray-700 transition-all">{{ loadingMessages[loadingMessageIndex] }}</p>
+      </div>
+
       <!-- Oferta -->
       <div v-else class="space-y-5">
         <div class="text-center">
@@ -346,15 +425,35 @@ function startTrial() {
             Pelo que você me contou, o Veekar vai te ajudar a
             {{ painMessages[answers.main_pain] ?? 'organizar sua oficina' }}.
           </h1>
+          <p v-if="volumeMessages[answers.cars_per_month]" class="text-sm text-gray-500 mt-2 leading-relaxed">
+            {{ volumeMessages[answers.cars_per_month] }}
+          </p>
+        </div>
+
+        <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-2.5">
+          <span class="flex-shrink-0 w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4" />
+            </svg>
+          </span>
+          <p class="text-xs text-gray-600 leading-relaxed">
+            <strong class="text-gray-800">"Depois que comecei a usar o Veekar, parei de perder cliente por
+            esquecimento."</strong> — dono de oficina, usuário Veekar
+          </p>
         </div>
 
         <div class="bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 rounded-2xl p-5 text-center text-white relative overflow-hidden shadow-xl shadow-blue-600/30">
           <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-          <p class="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1 relative">Oferta exclusiva pra você</p>
+          <p class="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1 relative">
+            {{ offerExpired ? 'Sua oferta personalizada' : 'Oferta exclusiva pra você' }}
+          </p>
           <p class="text-3xl font-bold relative">20% OFF</p>
           <p class="text-sm text-blue-100 mt-1 relative">nos primeiros 3 meses</p>
           <p class="text-xs text-blue-200 mt-2 relative">
             de <span class="line-through">R$ 49,90</span> por <strong>R$ 39,92</strong>/mês
+          </p>
+          <p v-if="offerSecondsLeft !== null && !offerExpired" class="text-xs text-white/90 mt-3 relative font-medium">
+            Essa condição fica reservada por mais <strong>{{ offerCountdownLabel }}</strong>
           </p>
         </div>
 
@@ -374,6 +473,17 @@ function startTrial() {
         >
           Prefiro testar grátis primeiro
         </button>
+
+        <div class="border-t border-gray-100 pt-4 space-y-3">
+          <div v-for="faq in [
+            { q: 'Posso cancelar quando quiser?', a: 'Sim, sem contrato de fidelidade. Cancele quando quiser, direto pelo sistema.' },
+            { q: 'Preciso saber mexer em sistema?', a: 'Não. O Veekar foi feito pra quem nunca usou nenhum sistema antes — simples e direto.' },
+            { q: 'E se eu não gostar?', a: 'Você pode cancelar a qualquer momento, sem multa nem burocracia.' },
+          ]" :key="faq.q">
+            <p class="text-xs font-semibold text-gray-800">{{ faq.q }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ faq.a }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -410,5 +520,20 @@ function startTrial() {
 }
 .animate-bounce-in {
   animation: bounce-in 0.5s ease-out;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.8; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 1.4s ease-in-out infinite;
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 1.6s linear infinite;
 }
 </style>

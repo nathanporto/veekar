@@ -76,12 +76,11 @@ const secondaryLabel = computed(() =>
 
       <a
         :href="CAKTO_CHECKOUT_URL"
-        target="_blank"
-        rel="noopener noreferrer"
         class="block w-full text-center py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:-translate-y-0.5"
       >
         Quero o Kit por R$ 21,90
       </a>
+      <p class="text-center text-xs text-gray-400 -mt-2">Pagamento processado com segurança pela Cakto</p>
 
       <button
         class="w-full py-3 border-2 border-gray-100 hover:bg-gray-50 text-gray-600 font-medium rounded-xl transition-colors"
