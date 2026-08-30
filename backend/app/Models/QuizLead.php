@@ -18,12 +18,15 @@ class QuizLead extends Model
         'chosen_path',
         'accepted_terms_at',
         'user_id',
+        'recovery_step',
+        'recovery_last_sent_at',
     ];
 
     protected function casts(): array
     {
         return [
             'accepted_terms_at' => 'datetime',
+            'recovery_last_sent_at' => 'datetime',
         ];
     }
 

@@ -4,6 +4,7 @@ import { useQuizStore } from '~/stores/quiz'
 definePageMeta({ layout: 'quiz' })
 
 const store = useQuizStore()
+const { track, trackCustom } = useMetaPixel()
 
 type StepKey = 'business_type' | 'cars_per_month' | 'current_control' | 'main_pain'
 
@@ -89,11 +90,35 @@ const otherTexts = reactive<Record<StepKey, string>>({
 
 const isOtherSelected = computed(() => answers[steps[currentStep.value].key] === 'outro')
 
+// "Motor" que vai se montando a cada resposta — puramente visual/sonoro,
+// não tem nenhum efeito no resultado do quiz.
+const engineIcons = [
+  'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z', // módulo/chip
+  'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z', // engrenagem
+  'M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085', // chave de ferramenta
+  'M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z', // ignição/raio
+]
+
+// Som curto de "clique de ferramenta" (arquivo real, cortado sem o silêncio do início)
+let toolClickAudio: HTMLAudioElement | null = null
+function playToolClick() {
+  if (typeof window === 'undefined') return
+  try {
+    toolClickAudio = toolClickAudio || new Audio('/sounds/tool-click.mp3')
+    toolClickAudio.currentTime = 0
+    void toolClickAudio.play()
+  } catch {
+    // som é só um efeito — se o navegador bloquear, segue o jogo em silêncio
+  }
+}
+
 function advanceStep() {
+  playToolClick()
   direction.value = 'forward'
   if (currentStep.value < steps.length - 1) {
     currentStep.value++
   } else {
+    trackCustom('QuizCompleted')
     stage.value = 'contact'
   }
 }
@@ -119,19 +144,11 @@ const submittingContact = ref(false)
 const contactError = ref('')
 const leadId = ref<number | null>(null)
 
-// Formata o telefone com DDD enquanto a pessoa digita: (11) 91234-5678
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (digits.length === 0) return ''
-  if (digits.length <= 2) return `(${digits}`
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
-}
-
+// Formata o telefone com DDD enquanto a pessoa digita (mesmo composable usado em Clientes)
+const { applyMask } = usePhone()
 const phoneDisplay = computed({
   get: () => contact.phone,
-  set: (value: string) => { contact.phone = formatPhone(value) },
+  set: (value: string) => { contact.phone = applyMask(value) },
 })
 
 // Quem voltou do checkout (ou da oferta do Kit) já tem um lead criado — pula
@@ -141,6 +158,8 @@ const resumeLeadId = route.query.resume_lead_id
 if (resumeLeadId) {
   leadId.value = Number(resumeLeadId)
   stage.value = 'offer'
+} else {
+  trackCustom('QuizStarted')
 }
 
 // Tela de "analisando respostas" — só um efeito de personalização, com
@@ -187,6 +206,7 @@ async function submitContact() {
       accepted_terms: acceptedTerms.value,
     })
     leadId.value = lead.id
+    track('Lead')
     runLoadingStage()
   } catch (e) {
     contactError.value = e instanceof Error ? e.message : 'Erro ao enviar. Tente novamente.'
@@ -230,9 +250,15 @@ const offerCountdownLabel = computed(() => {
 })
 
 watch(stage, (value) => {
-  if (value === 'offer') startOfferCountdown()
+  if (value === 'offer') {
+    startOfferCountdown()
+    track('ViewContent', { content_name: 'oferta_veekar' })
+  }
 })
-if (stage.value === 'offer') startOfferCountdown()
+if (stage.value === 'offer') {
+  startOfferCountdown()
+  track('ViewContent', { content_name: 'oferta_veekar' })
+}
 
 // Oferta
 const checkingOut = ref(false)
@@ -242,6 +268,7 @@ async function subscribeWithDiscount() {
   if (!leadId.value) return
   checkingOut.value = true
   checkoutError.value = ''
+  track('InitiateCheckout', { value: 39.92, currency: 'BRL' })
   try {
     const data = await store.checkout(leadId.value)
     window.location.href = data.url
@@ -286,8 +313,35 @@ function startTrial() {
           </button>
         </div>
 
-        <div class="h-1.5 bg-gray-100 rounded-full mb-6 overflow-hidden">
+        <div class="h-1.5 bg-gray-100 rounded-full mb-5 overflow-hidden">
           <div class="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out" :style="{ width: progress + '%' }" />
+        </div>
+
+        <!-- "Motor" sendo montado a cada resposta -->
+        <div class="flex items-center justify-center gap-3 mb-6">
+          <template v-for="(icon, i) in engineIcons" :key="i">
+            <div
+              class="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300"
+              :class="i < currentStep
+                ? 'bg-blue-600 border-blue-600 scale-100'
+                : i === currentStep
+                  ? 'border-blue-400 border-dashed scale-105 animate-pulse-soft'
+                  : 'border-gray-200 border-dashed opacity-60'"
+            >
+              <svg
+                class="w-4.5 h-4.5 transition-colors"
+                :class="i < currentStep ? 'text-white' : 'text-gray-300'"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" :d="icon" />
+              </svg>
+            </div>
+            <div
+              v-if="i < engineIcons.length - 1"
+              class="w-4 h-0.5 rounded-full transition-colors duration-300"
+              :class="i < currentStep ? 'bg-blue-600' : 'bg-gray-200'"
+            />
+          </template>
         </div>
 
         <Transition :name="direction === 'forward' ? 'slide-left' : 'slide-right'" mode="out-in">

@@ -28,6 +28,19 @@ class EmailService
         );
     }
 
+    public function sendWelcomePremium(string $email, string $name): void
+    {
+        $this->send(
+            to: $email,
+            subject: 'Bem-vindo ao Veekar! 🚗',
+            html: $this->template('Olá, ' . $this->firstName($name) . '!', [
+                'Sua conta foi criada com sucesso e sua assinatura <strong>Veekar Premium já está ativa</strong>.',
+                'Isso quer dizer que você já tem acesso <strong>ilimitado</strong> a clientes, veículos e atendimentos — sem precisar fazer nada além de definir sua senha.',
+                'Qualquer dúvida, é só responder este e-mail.',
+            ], 'Acessar o Veekar', config('services.stripe.frontend_url') . '/dashboard')
+        );
+    }
+
     public function sendPaymentConfirmed(string $email, string $name): void
     {
         $this->send(
@@ -124,6 +137,37 @@ class EmailService
                     . '<strong>3. Registre um atendimento</strong> — descrição do serviço e valor.',
                 'Pronto — a partir daí, o histórico do veículo, o controle de pagamento e tudo mais já ficam registrados automaticamente.',
             ], 'Acessar o Veekar', config('services.stripe.frontend_url') . '/dashboard')
+        );
+    }
+
+    public function sendQuizRecoveryStep1(string $email, string $name, int $leadId): void
+    {
+        $resumeUrl = config('services.stripe.frontend_url') . '/quiz?resume_lead_id=' . $leadId;
+        $kitUrl    = 'https://pay.cakto.com.br/f4yogd8_1053315';
+
+        $this->send(
+            to: $email,
+            subject: 'Sua condição especial no Veekar ainda está de pé',
+            html: $this->template('Ainda dá tempo, ' . $this->firstName($name) . '!', [
+                'Você chegou a ver sua oferta personalizada no Veekar, mas não finalizou.',
+                'Sua condição de <strong>20% de desconto nos primeiros 3 meses</strong> continua disponível — é só voltar e concluir.',
+                'Se preferir algo mais simples pra começar, também temos o <a href="' . $kitUrl . '" style="color:#2563eb;">Kit Oficina Organizada</a>, por R$ 21,90.',
+            ], 'Voltar pra minha oferta', $resumeUrl)
+        );
+    }
+
+    public function sendQuizRecoveryStep2(string $email, string $name, int $leadId): void
+    {
+        $resumeUrl = config('services.stripe.frontend_url') . '/quiz?resume_lead_id=' . $leadId;
+
+        $this->send(
+            to: $email,
+            subject: 'Última chance: organize sua oficina hoje',
+            html: $this->template('Não deixa pra depois, ' . $this->firstName($name) . '.', [
+                'Essa é a última vez que vamos te lembrar da sua oferta personalizada no Veekar.',
+                'Continuar controlando tudo na planilha ou no papel custa mais caro do que parece — cada cliente esquecido é dinheiro perdido.',
+                'Ainda dá tempo de aproveitar os <strong>20% de desconto nos primeiros 3 meses</strong>.',
+            ], 'Aproveitar agora', $resumeUrl, '#dc2626')
         );
     }
 

@@ -4,7 +4,14 @@ definePageMeta({ layout: 'quiz' })
 const CAKTO_CHECKOUT_URL = 'https://pay.cakto.com.br/f4yogd8_1053315'
 
 const route = useRoute()
+const { track } = useMetaPixel()
 const source = computed(() => (route.query.ref === 'trial' ? 'trial' : 'checkout'))
+
+track('ViewContent', { content_name: 'oferta_kit' })
+
+function trackKitCheckout() {
+  track('InitiateCheckout', { value: 21.90, currency: 'BRL', content_name: 'kit_oficina_organizada' })
+}
 
 const heading = computed(() =>
   source.value === 'trial'
@@ -77,6 +84,7 @@ const secondaryLabel = computed(() =>
       <a
         :href="CAKTO_CHECKOUT_URL"
         class="block w-full text-center py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:-translate-y-0.5"
+        @click="trackKitCheckout"
       >
         Quero o Kit por R$ 21,90
       </a>

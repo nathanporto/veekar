@@ -221,10 +221,27 @@ class SubscriptionController extends Controller
         $lead = QuizLead::find($quizLeadId);
         if (! $lead) return;
 
-        $existing = User::where('email', $lead->email)->first();
-        if ($existing) return; // já tem conta, evita duplicar
-
         $stripeSubscription = StripeSubscription::retrieve($session->subscription);
+        $subscriptionData = [
+            'stripe_customer_id'     => $session->customer,
+            'stripe_subscription_id' => $session->subscription,
+            'status'                 => 'active',
+            'current_period_end'     => $stripeSubscription->current_period_end
+                ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
+                : null,
+            'discount_code'          => 'quiz-20off-3m',
+        ];
+
+        $existing = User::where('email', $lead->email)->first();
+
+        if ($existing) {
+            // Já tem conta (ex: testou o trial grátis antes) — não cria duplicata,
+            // mas ainda assim precisa ativar a assinatura que acabou de ser paga.
+            $existing->subscription()->updateOrCreate([], $subscriptionData);
+            $lead->update(['user_id' => $existing->id]);
+            rescue(fn () => $this->email->sendPaymentConfirmed($existing->email, $existing->name));
+            return;
+        }
 
         $user = User::create([
             'name'              => $lead->name,
@@ -235,15 +252,7 @@ class SubscriptionController extends Controller
             'terms_version'     => config('terms.version'),
         ]);
 
-        $user->subscription()->create([
-            'stripe_customer_id'     => $session->customer,
-            'stripe_subscription_id' => $session->subscription,
-            'status'                 => 'active',
-            'current_period_end'     => $stripeSubscription->current_period_end
-                ? Carbon::createFromTimestamp($stripeSubscription->current_period_end)
-                : null,
-            'discount_code'          => 'quiz-20off-3m',
-        ]);
+        $user->subscription()->create($subscriptionData);
 
         $lead->update(['user_id' => $user->id]);
 
@@ -259,7 +268,7 @@ class SubscriptionController extends Controller
             update: ['token', 'created_at'],
         );
 
-        rescue(fn () => $this->email->sendWelcome($user->email, $user->name));
+        rescue(fn () => $this->email->sendWelcomePremium($user->email, $user->name));
         rescue(fn () => $this->email->sendSetPassword($user->email, $user->name, $token));
     }
 
