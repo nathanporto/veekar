@@ -30,8 +30,9 @@ class ReportController extends Controller
             ->whereYear('service_date', $prev->year)
             ->sum('amount');
 
-        $chart         = [];
-        $cashFlowChart = [];
+        $chart          = [];
+        $cashFlowChart  = [];
+        $paymentChart   = [];
         for ($i = 5; $i >= 0; $i--) {
             $date  = $now->copy()->subMonths($i);
             $total = ServiceHistory::where($base)
@@ -52,6 +53,24 @@ class ReportController extends Controller
                 'entradas' => $entradas,
                 'saidas'   => $saidas,
                 'saldo'    => $entradas - $saidas,
+            ];
+
+            $recebidoMonth = (float) ServiceHistory::where($base)
+                ->whereMonth('service_date', $date->month)
+                ->whereYear('service_date', $date->year)
+                ->sum('amount_paid');
+
+            $aReceberMonth = (float) ServiceHistory::where($base)
+                ->whereMonth('service_date', $date->month)
+                ->whereYear('service_date', $date->year)
+                ->whereIn('payment_status', ['pendente', 'parcial'])
+                ->selectRaw('COALESCE(SUM(amount - amount_paid), 0) as total')
+                ->value('total');
+
+            $paymentChart[] = [
+                'label'     => ucfirst($date->translatedFormat('M/y')),
+                'recebido'  => $recebidoMonth,
+                'a_receber' => (float) $aReceberMonth,
             ];
         }
 
@@ -91,6 +110,7 @@ class ReportController extends Controller
             'payment_summary'      => [
                 'recebido'  => $recebido,
                 'a_receber' => $aReceber,
+                'chart'     => $paymentChart,
             ],
         ];
     }
@@ -156,6 +176,16 @@ class ReportController extends Controller
                 </tr>";
         }
 
+        $paymentRows = '';
+        foreach ($data['payment_summary']['chart'] as $month) {
+            $paymentRows .= "
+                <tr>
+                    <td>{$month['label']}</td>
+                    <td style='text-align:right;color:#16a34a'>{$fmt($month['recebido'])}</td>
+                    <td style='text-align:right;color:#d97706'>{$fmt($month['a_receber'])}</td>
+                </tr>";
+        }
+
         $cashFlowRows = '';
         foreach ($data['cash_flow']['chart'] as $month) {
             $saldoColor = $month['saldo'] >= 0 ? '#16a34a' : '#dc2626';
@@ -217,6 +247,16 @@ class ReportController extends Controller
                 <th style='text-align:right'>Faturamento</th>
             </tr>
             {$chartRows}
+        </table>
+
+        <div class='section-title' style='margin-top:28px'>Recebido x A receber — últimos 6 meses</div>
+        <table class='monthly'>
+            <tr>
+                <th>Mês</th>
+                <th style='text-align:right'>Recebido</th>
+                <th style='text-align:right'>A receber</th>
+            </tr>
+            {$paymentRows}
         </table>
 
         <div class='section-title' style='margin-top:28px'>Entradas x Saídas — últimos 6 meses</div>

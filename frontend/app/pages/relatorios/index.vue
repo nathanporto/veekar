@@ -29,6 +29,16 @@ function barWidth(value: number) {
   return (value / maxCashFlowAmount.value) * 100
 }
 
+const maxPaymentAmount = computed(() => {
+  if (!store.financial) return 1
+  const all = store.financial.payment_summary.chart.flatMap(m => [m.recebido, m.a_receber])
+  return Math.max(...all, 1)
+})
+
+function paymentBarWidth(value: number) {
+  return (value / maxPaymentAmount.value) * 100
+}
+
 const currentMonth = computed(() => {
   const now = new Date()
   return now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -175,7 +185,7 @@ async function downloadPdf() {
         </div>
         <p class="text-gray-500 text-sm mb-6">Baseado no status de pagamento marcado em cada atendimento do mês</p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div class="bg-green-50 rounded-lg p-4">
             <p class="text-xs text-green-700 mb-1">Recebido</p>
             <p class="text-xl font-bold text-green-800">{{ formatCurrency(store.financial.payment_summary.recebido) }}</p>
@@ -185,6 +195,23 @@ async function downloadPdf() {
             <p class="text-xl font-bold text-amber-800">{{ formatCurrency(store.financial.payment_summary.a_receber) }}</p>
           </div>
         </div>
+
+        <div class="space-y-2">
+          <div v-for="(month, i) in store.financial.payment_summary.chart" :key="i" class="flex items-center gap-3">
+            <span class="w-14 text-gray-400 text-xs font-medium flex-shrink-0">{{ month.label }}</span>
+            <div class="flex-1 flex items-center gap-1 h-4">
+              <div class="bg-green-400 h-full rounded" :style="{ width: paymentBarWidth(month.recebido) + '%' }" />
+              <div class="bg-amber-400 h-full rounded" :style="{ width: paymentBarWidth(month.a_receber) + '%' }" />
+            </div>
+            <span class="text-xs text-gray-500 w-44 text-right flex-shrink-0">
+              {{ formatCurrency(month.recebido) }} / {{ formatCurrency(month.a_receber) }}
+            </span>
+          </div>
+        </div>
+
+        <p v-if="store.financial.payment_summary.chart.every(m => m.recebido === 0 && m.a_receber === 0)" class="text-center text-gray-400 text-sm py-4 mt-2">
+          Nenhum atendimento com pagamento registrado ainda nesse período.
+        </p>
       </div>
 
       <!-- Entradas x Saídas -->
